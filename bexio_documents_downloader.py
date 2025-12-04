@@ -224,6 +224,21 @@ def main():
     if open_choice in ['j', 'y', 'ja', 'yes']:
         print(f"  📂 Öffne Ordner: {path}")
         open_directory(path)
+
+    # Frage ob AI Renamer gestartet werden soll
+    renamer_script = Path(__file__).parent / "bexio_documents_ai_renamer.py"
+    if renamer_script.exists():
+        print(f"\n{'─'*70}")
+        print("  🤖 AI RENAMER")
+        print(f"{'─'*70}")
+        rename_choice = input("  Möchtest du die heruntergeladenen Dateien jetzt mit AI umbenennen? (j/n): ").strip().lower()
+        if rename_choice in ['j', 'y', 'ja', 'yes']:
+            print(f"\n  🚀 Starte AI Renamer...")
+            try:
+                # Use the same python executable that ran this script
+                subprocess.run([sys.executable, str(renamer_script), "--input-dir", str(path)], check=False)
+            except Exception as e:
+                print(f"  ❌ Fehler beim Starten des Renamers: {e}")
     
     # Copyright
     print_copyright()
