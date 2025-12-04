@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+.env
+.env.*.local
+.env.local
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs / runtime output / temporary files
+*.log
+.tmp/
+.cache/
+*.swp
+*~ 
+
+# Test / coverage / type-checking
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.mypy_cache/
+
+# Secrets / credentials / keys
+# Ignore local credential files and exported tokens
+secrets.json
+*.key
+*.pem
+*.crt
+*.p12
+
+# Project-specific sensitive files
+accounts.csv
+# Template file (safe to keep in repo)
+!accounts-beispiel.csv
+
+# Misc
+Thumbs.db

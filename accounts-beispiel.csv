@@ -1,0 +1,50 @@
+Nummer;Name;Kontoart
+4200;Einkauf Handelsware;Aufwand
+4400;Einkauf Dienstleistungen;Aufwand
+4450;Hosting & Domains;Aufwand
+4455;AI Tools;Aufwand
+4700;Eingangsfrachten und Zoll;Aufwand
+4800;Bestandsänderung Handelswaren;Aufwand
+4900;Skonti;Aufwand
+4901;Rabatte und Preisnachlässe;Aufwand
+4906;Kursdifferenzen;Aufwand
+5000;Löhne;Aufwand
+5001;Zulagen;Aufwand
+5002;Erfolgsbeteiligungen;Aufwand
+5003;Provisionen;Aufwand
+5005;Leistungen von Sozialversicherungen;Aufwand
+5008;Übriger Personalaufwand;Aufwand
+5700;AHV, IV, EO, ALV;Aufwand
+5710;FAK;Aufwand
+5720;Vorsorgeeinrichtungen;Aufwand
+5730;Unfallversicherung;Aufwand
+5740;Krankentaggeldversicherung;Aufwand
+5790;Quellensteuer;Aufwand
+5810;Aus- und Weiterbildung;Aufwand
+5820;Spesenentschädigung effektiv;Aufwand
+5832;Spesen, Reise, Auto, Übernachtung;Aufwand
+5880;Personalanlässe;Aufwand
+5890;Privatanteile Personalaufwand;Aufwand
+6000;Miete Office / Coworking Spaces;Aufwand
+6100;URE Maschinen und Einrichtungen;Aufwand
+6300;Sachversicherungen;Aufwand
+6360;Abgaben, Gebühren, Bewilligungen;Aufwand
+6400;Energie- und Entsorgungsaufwand;Aufwand
+6500;Büromaterial;Aufwand
+6510;Kommunikationskosten;Aufwand
+6512;Internet;Aufwand
+6530;Buchführung;Aufwand
+6532;Rechtsberatung;Aufwand
+6550;Gründungs-, Kapitalerhöhungs- und Organisationsaufwand;Aufwand
+6559;Sonstiger Verwaltungsaufwand;Aufwand
+6570;Informatikaufwand;Aufwand
+6600;Werbeinserate, elektronische Medien;Aufwand
+6641;Kundenbetreuung;Aufwand
+6800;Abschreibung / WB Anlagevermögen;Aufwand
+6900;Zinsaufwand;Aufwand
+6940;Bankspesen;Aufwand
+6945;Rundungsdifferenz;Aufwand
+6949;Währungsverluste;Aufwand
+8000;Betriebsfremder a.o. Aufwand;Aufwand
+8505;A.o. Verluste von Forderungen;Aufwand
+8900;Direkte Steuern;Aufwand
