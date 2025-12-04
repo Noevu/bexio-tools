@@ -12,6 +12,7 @@ import subprocess
 import re
 import json
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -29,7 +30,7 @@ from lib.utils import open_url, open_file, open_directory, set_finder_comment, g
 
 # --- CONFIGURATION ---
 DEFAULT_MODEL = os.environ.get("MODEL", "gemini-2.5-flash")
-DEFAULT_CONCURRENCY = int(os.environ.get("CONCURRENCY", 4))
+DEFAULT_CONCURRENCY = int(os.environ.get("CONCURRENCY", 20))
 DATA_DIR = get_data_dir()
 DEFAULT_INPUT_DIR = DATA_DIR / "downloads"
 DEFAULT_OUT_DIR = DATA_DIR / "benannt"
@@ -424,21 +425,38 @@ def process_file(filepath: Path, args, company_name: str, gemini_cmd: list, file
         if args.disable_mcp:
             cmd_args.extend(["--allowed-mcp-server-names", "__DISABLED__"])
 
-        proc = subprocess.run(
-            cmd_args,
-            input=prompt, text=True, capture_output=True, env=env,
-            cwd=filepath.parent
-        )
-        
-        raw_output = proc.stdout
-        clean_output = "\n".join([line for line in raw_output.splitlines() if "IDEClient" not in line])
+        raw_output = ""
+        clean_output = ""
+        data = None
+        retries = 3
+
+        for attempt in range(retries):
+            proc = subprocess.run(
+                cmd_args,
+                input=prompt, text=True, capture_output=True, env=env,
+                cwd=filepath.parent
+            )
+            
+            raw_output = proc.stdout
+            clean_output = "\n".join([line for line in raw_output.splitlines() if "IDEClient" not in line])
+
+            if clean_output.strip():
+                data = extract_data_from_json(clean_output)
+                if data:
+                    break  # Success, exit retry loop
+            
+            with CONSOLE_LOCK:
+                log_func = log.warning if log else print
+                log_func(f"  Versuch {attempt + 1}/{retries} für {filepath.name} fehlgeschlagen (keine validen Daten von Gemini).")
+                if attempt + 1 < retries:
+                    log_func("  Wiederhole in 1 Sekunde...")
+                    time.sleep(1)
 
         raw_dir = args.log_dir / "gemini_raw"
         raw_dir.mkdir(parents=True, exist_ok=True)
         with open(raw_dir / f"{filepath.name}.raw.txt", "w", encoding="utf-8") as f:
             f.write(f"=== {get_now_iso()} | {filepath.name} ===\n{clean_output}\n")
 
-        data = extract_data_from_json(clean_output)
         new_filename = None
         
         if data:
