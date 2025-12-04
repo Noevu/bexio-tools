@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
+"""
+Bexio document downloader - Downloads documents from Bexio API.
+"""
 import os
 import json
 import re
 import sys
 import urllib.request
 import urllib.error
-import subprocess
-import platform
 import argparse
 from pathlib import Path
 
+# Add parent directory to path for lib imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from lib.utils import open_url, open_directory, get_data_dir
+
+
 def sanitize_filename(name):
-    """
-    Ersetzt Zeichen, die in Windows-/Unix-Dateinamen ungültig sind, durch Unterstriche.
-    """
+    """Ersetzt Zeichen, die in Windows-/Unix-Dateinamen ungültig sind, durch Unterstriche."""
     return re.sub(r'[<>:"/\\|?*]', '_', name)
+
 
 def print_intro():
     """Zeigt einen hübschen Intro Screen."""
@@ -24,39 +30,14 @@ def print_intro():
     print("\n  💡 Tipp: Du kannst jederzeit mit 'q' abbrechen")
     print()
 
+
 def print_copyright():
     """Zeigt Copyright-Informationen."""
     print("\n" + "-" * 70)
     print("  Copyright © Noevu GmbH – AI Lösungen für Schweizer KMU")
-    print("  https://noevu.ch/ai-beratung-kmu-schweiz?utm_source=bexio_documents_downloader")
+    print("  https://noevu.ch/ai-beratung-kmu-schweiz?utm_source=bexio_downloader")
     print("-" * 70 + "\n")
 
-def open_url(url: str):
-    """Öffnet eine URL im Standard-Browser."""
-    try:
-        system = platform.system()
-        if system == "Darwin":  # macOS
-            subprocess.run(["open", url], check=False)
-        elif system == "Windows":
-            subprocess.run(["start", url], check=False, shell=True)
-        else:  # Linux und andere
-            subprocess.run(["xdg-open", url], check=False)
-    except Exception:
-        pass  # Fehler beim Öffnen ignorieren
-
-def open_directory(dirpath):
-    """Öffnet einen Ordner im Datei-Explorer/Finder."""
-    try:
-        system = platform.system()
-        dir_path_str = str(Path(dirpath).resolve())
-        if system == "Darwin":  # macOS
-            subprocess.run(["open", dir_path_str], check=False)
-        elif system == "Windows":
-            subprocess.run(["explorer", dir_path_str], check=False)
-        else:  # Linux und andere
-            subprocess.run(["xdg-open", dir_path_str], check=False)
-    except Exception:
-        pass  # Fehler beim Öffnen ignorieren
 
 def print_token_help():
     url = "https://developer.bexio.com/pat"
@@ -77,12 +58,12 @@ def print_token_help():
         open_url(url)
     print()
 
+
 def main():
     parser = argparse.ArgumentParser(description="Dokumente aus Bexio herunterladen.")
     parser.add_argument("--download-dir", type=Path, default=None, help="Ordner für heruntergeladene Dateien")
     args = parser.parse_args()
     
-    # Intro Screen
     print_intro()
     
     # --- 1. Token abrufen ---
@@ -100,11 +81,8 @@ def main():
             print("  ⚠️  Bitte gib einen gültigen Token ein oder 'q' zum Beenden.")
 
     # --- 2. Zielpfad ermitteln ---
-    # Bestimme den Ordner, in dem sich diese Python-Datei befindet
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_path = Path(script_dir) / 'downloads'
+    default_path = get_data_dir() / 'downloads'
     
-    # Wenn nicht als Parameter übergeben, interaktiv fragen
     if args.download_dir:
         path = Path(args.download_dir).resolve()
     else:
@@ -120,8 +98,6 @@ def main():
         if path_input == "":
             path = default_path
         else:
-            # Relative Pfade werden relativ zum aktuellen Arbeitsverzeichnis aufgelöst,
-            # absolute Pfade werden übernommen
             path = Path(path_input).resolve()
         print(f"{'─'*70}\n")
 
@@ -151,7 +127,6 @@ def main():
         print("  Bye bye 👋")
         sys.exit(0)
     
-    # Default auf Option 1 setzen, wenn leer
     if option_input == "":
         option_input = "1"
     
@@ -219,14 +194,13 @@ def main():
     print(f"\n{'─'*70}")
     print("  ✓ Download abgeschlossen!")
     
-    # Frage ob Ordner geöffnet werden soll
     open_choice = input(f"\n  Soll der Ordner '{path}' geöffnet werden? (j/n): ").strip().lower()
     if open_choice in ['j', 'y', 'ja', 'yes']:
         print(f"  📂 Öffne Ordner: {path}")
         open_directory(path)
 
     # Frage ob AI Renamer gestartet werden soll
-    renamer_script = Path(__file__).parent / "bexio_documents_ai_renamer.py"
+    renamer_script = Path(__file__).parent / "ai-renamer.py"
     if renamer_script.exists():
         print(f"\n{'─'*70}")
         print("  🤖 AI RENAMER")
@@ -235,13 +209,13 @@ def main():
         if rename_choice in ['j', 'y', 'ja', 'yes']:
             print(f"\n  🚀 Starte AI Renamer...")
             try:
-                # Use the same python executable that ran this script
+                import subprocess
                 subprocess.run([sys.executable, str(renamer_script), "--input-dir", str(path)], check=False)
             except Exception as e:
                 print(f"  ❌ Fehler beim Starten des Renamers: {e}")
     
-    # Copyright
     print_copyright()
+
 
 if __name__ == "__main__":
     main()

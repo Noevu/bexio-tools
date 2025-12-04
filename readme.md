@@ -4,7 +4,7 @@ By Noevu GmbH
 
 **Deine Daten gehören dir.**
 
-Dieses Projekt besteht aus zwei Skripten, die dir helfen, deine Buchhaltungsbelege vollständig aus Bexio zu exportieren und mittels künstlicher Intelligenz (Google Gemini) automatisch zu analysieren, zu benennen und zu sortieren.
+Dieses Projekt besteht aus einer CLI-Anwendung und zwei Tools, die dir helfen, deine Buchhaltungsbelege vollständig aus Bexio zu exportieren und mittels künstlicher Intelligenz (Google Gemini) automatisch zu analysieren, zu benennen und zu sortieren.
 
 ## Hintergrund & Motivation
 
@@ -18,10 +18,37 @@ Wir waren frustriert. Lösungen wie der [Kontera Belegexport](https://help.konte
 
 ---
 
+## Projektstruktur
+
+```
+Bexio-Tools/
+├── bexio-tools.py          # 🤖 Haupteinstiegspunkt (CLI mit Menü)
+├── readme.md
+├── LICENSE
+│
+├── lib/                    # Shared Library
+│   ├── config.py           # Konfigurationsmanager (persistente Einstellungen)
+│   └── utils.py            # Hilfsfunktionen
+│
+├── tools/                  # Einzelne Tools (auch standalone nutzbar)
+│   ├── downloader.py       # Bexio Dokument-Downloader
+│   └── ai-renamer.py       # KI-basierte Umbenennung
+│
+└── data/                   # Laufzeitdaten
+    ├── accounts.csv        # Dein Kontenplan
+    ├── downloads/          # Heruntergeladene Dateien
+    ├── benannt/            # Umbenannte Dateien
+    ├── verarbeitet/        # Archiv der Originale
+    └── logs/               # Log-Dateien
+```
+
+---
+
 ## Die Tools
 
-1. **`bexio_documents_downloader.py`**: Lädt alle Dokumente (Inbox oder Archiv) aus deinem Bexio-Konto herunter.
-2. **`bexio_documents_ai_renamer.py`**: Analysiert den Inhalt der Dateien mit Google Gemini, benennt sie logisch um (Datum, Lieferant, Konto) und sortiert sie.
+1. **`bexio-tools.py`**: Unified CLI mit Menü – der einfachste Weg, alle Funktionen zu nutzen.
+2. **`tools/downloader.py`**: Lädt alle Dokumente (Inbox oder Archiv) aus deinem Bexio-Konto herunter.
+3. **`tools/ai-renamer.py`**: Analysiert den Inhalt der Dateien mit Google Gemini, benennt sie logisch um.
 
 ## Voraussetzungen
 
@@ -29,6 +56,31 @@ Wir waren frustriert. Lösungen wie der [Kontera Belegexport](https://help.konte
 - **Node.js & npm** installiert (wird für das KI-Interface benötigt).
 - Ein **Bexio-Konto**.
 - Ein **Google AI Studio Konto** (kostenlos).
+
+---
+
+## Schnellstart
+
+### Mit der CLI (Empfohlen)
+
+```bash
+python bexio-tools.py
+```
+
+Das CLI führt dich durch alle Schritte:
+1. API Key eingeben (wird gespeichert in `~/.bexio-tools/config.json`)
+2. Firmenname eingeben
+3. Menü: Download, Rename, oder beides
+
+### Einzelne Tools direkt aufrufen
+
+```bash
+# Nur Dokumente herunterladen
+python tools/downloader.py
+
+# Nur Dokumente umbenennen
+python tools/ai-renamer.py
+```
 
 ---
 
@@ -51,7 +103,7 @@ Damit die KI deine Belege lesen kann.
 
 ### 3. Kontenplan (Optional, aber empfohlen)
 
-Erstelle im Ordner der Skripte eine Datei namens `accounts.csv`. Das KI-Skript nutzt diese, um den Belegen direkt das korrekte Buchhaltungskonto zuzuweisen.
+Erstelle im `data/` Ordner eine Datei namens `accounts.csv`. Das KI-Skript nutzt diese, um den Belegen direkt das korrekte Buchhaltungskonto zuzuweisen.
 
 **Format der `accounts.csv` (Trennzeichen: Semikolon):**
 
@@ -62,94 +114,53 @@ Erstelle im Ordner der Skripte eine Datei namens `accounts.csv`. Das KI-Skript n
 6570;Strom, Wasser, Gas;Aufwand
 ```
 
-### 4. Umgebungsvariablen (Optional)
+---
 
-Du kannst die Keys bei jedem Start eingeben oder sie dauerhaft in deinem System (`.zshrc`, `.bashrc` oder Windows Umgebungsvariablen) hinterlegen:
+## Konfiguration
 
-```bash
-export BEXIO_ACCESS_TOKEN="dein-bexio-token"
-export GOOGLE_API_KEY="dein-google-key"
-export COMPANY_NAME="Muster GmbH"  # Hilft der KI, Empfänger vs. Absender zu unterscheiden
-```
+Die CLI speichert deine Einstellungen automatisch in `~/.bexio-tools/config.json`:
+
+- API Key
+- Firmenname
+- Custom AI-Anweisungen (z.B. "Dokumente an Person X als Privatauslage markieren")
+- Ordner-Pfade
+- Modell & Parallelität
+
+Du kannst die Einstellungen jederzeit über das Menü (Option 4) ändern.
 
 ---
 
-## Nutzung
+## Nutzung mit Parametern
 
-### Schritt 1: Dokumente herunterladen
-
-Starte den Downloader. Er speichert die Dateien standardmäßig in den Ordner `downloads`.
+### Downloader
 
 ```bash
-python3 bexio_documents_downloader.py
+python tools/downloader.py --download-dir /pfad/zu/downloads
+```
+
+### AI Renamer
+
+```bash
+python tools/ai-renamer.py \
+  --input-dir data/downloads \
+  --out-dir data/benannt \
+  --archive-dir data/verarbeitet \
+  --log-dir data/logs \
+  --model gemini-2.5-flash \
+  --concurrency 4
 ```
 
 **Parameter:**
 
-- `--download-dir <pfad>`: Ordner für heruntergeladene Dateien (Standard: `downloads`)
-
-**Beispiel:**
-
-```bash
-python3 bexio_documents_downloader.py --download-dir /pfad/zu/meine/downloads
-```
-
-_Folge den Anweisungen im Terminal (Wahl zwischen "Alles" oder "Inbox"). Am Ende wird gefragt, ob der Download-Ordner geöffnet werden soll._
-
-### Schritt 2: Dokumente analysieren & umbenennen
-
-Starte den AI Renamer. Er nimmt die Dateien aus `downloads`, schickt sie zur Analyse an die KI und speichert das Ergebnis in `benannt`.
-
-```bash
-python3 bexio_documents_ai_renamer.py
-```
-
-**Parameter:**
-
-- `--input-dir <pfad>`: Ordner mit zu verarbeitenden Dateien (Standard: `downloads`)
-- `--out-dir <pfad>`: Ordner für umbenannte Dateien (Standard: `benannt`)
-- `--archive-dir <pfad>`: Ordner für verarbeitete Originale (Standard: `verarbeitet`)
-- `--log-dir <pfad>`: Ordner für Log-Dateien (Standard: `logs`)
-- `--model <modell>`: Gemini Modell (Standard: `gemini-2.5-flash`)
-- `-c, --concurrency <anzahl>`: Anzahl gleichzeitiger Threads (Standard: `4`)
-- `--limit <anzahl>`: Maximale Anzahl zu verarbeitender Dateien (Standard: `0` = alle)
-
-**Beispiel:**
-
-```bash
-python3 bexio_documents_ai_renamer.py --input-dir downloads --out-dir benannt --archive-dir archiv --log-dir logs
-```
-
-_Beim Start werden alle Ordner-Pfade abgefragt (mit Standardwerten). Am Ende wird gefragt, ob der Output-Ordner geöffnet werden soll._
-
-**Was passiert dabei?**
-
-1. Das Skript fragt nach allen Ordner-Pfaden (mit Standardwerten) oder verwendet die übergebenen Parameter.
-2. Das Skript prüft, ob das nötige CLI-Tool (`gemini-chat-cli`) installiert ist. Falls nicht, bietet es an, dies via `npm` automatisch zu tun.
-3. Jede Datei wird analysiert (Datum, Lieferant, Typ, Inhalt).
-4. Die Datei wird nach dem Schema `YYYY-MM-DD - Lieferant - Typ - Empfänger - Beschreibung.ext` umbenannt.
-5. Die Datei wird in den Output-Ordner (`benannt/` standardmäßig) kopiert.
-6. Das Original wird in den Archiv-Ordner (`verarbeitet/` standardmäßig) verschoben.
-7. Am Ende wird gefragt, ob der Output-Ordner geöffnet werden soll.
-
----
-
-## Ordnerstruktur
-
-Nach der Ausführung sieht dein Ordner so aus:
-
-```text
-.
-├── bexio_documents_downloader.py
-├── bexio_documents_ai_renamer.py
-├── accounts.csv            # Dein Kontenplan
-├── downloads/              # (Leer, da verarbeitet)
-├── benannt/                # HIER liegen deine fertigen Dateien
-│   ├── 2023-10-12 - Swisscom - Rechnung - Muster_GmbH - Internet.pdf
-│   └── 2023-11-05 - SBB - Quittung - Mitarbeiter - Halbtax.jpg
-├── verarbeitet/            # Archiv der Original-Dateien (Backup)
-└── logs/                   # Technische Logs der KI-Antworten
-```
+| Parameter | Beschreibung | Standard |
+|-----------|--------------|----------|
+| `--input-dir` | Ordner mit zu verarbeitenden Dateien | `data/downloads` |
+| `--out-dir` | Ordner für umbenannte Dateien | `data/benannt` |
+| `--archive-dir` | Ordner für verarbeitete Originale | `data/verarbeitet` |
+| `--log-dir` | Ordner für Log-Dateien | `data/logs` |
+| `--model` | Gemini Modell | `gemini-2.5-flash` |
+| `-c, --concurrency` | Anzahl gleichzeitiger Threads | `4` |
+| `--limit` | Maximale Anzahl Dateien | `0` (alle) |
 
 ---
 
