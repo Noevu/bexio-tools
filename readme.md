@@ -31,7 +31,7 @@ Bexio-Tools/
 │   └── utils.py            # Hilfsfunktionen
 │
 ├── tools/                  # Einzelne Tools (auch standalone nutzbar)
-│   ├── downloader.py       # Bexio Dokument-Downloader
+│   ├── bexio-downloader.py       # Bexio Dokument-Downloader
 │   └── ai-renamer.py       # KI-basierte Umbenennung
 │
 └── data/                   # Laufzeitdaten
@@ -47,7 +47,7 @@ Bexio-Tools/
 ## Die Tools
 
 1. **`bexio-tools.py`**: Unified CLI mit Menü – der einfachste Weg, alle Funktionen zu nutzen.
-2. **`tools/downloader.py`**: Lädt alle Dokumente (Inbox oder Archiv) aus deinem Bexio-Konto herunter.
+2. **`tools/bexio-downloader.py`**: Lädt alle Dokumente (Inbox oder Archiv) aus deinem Bexio-Konto herunter.
 3. **`tools/ai-renamer.py`**: Analysiert den Inhalt der Dateien mit Google Gemini, benennt sie logisch um.
 
 ## Voraussetzungen
@@ -76,7 +76,7 @@ Das CLI führt dich durch alle Schritte:
 
 ```bash
 # Nur Dokumente herunterladen
-python tools/downloader.py
+python tools/bexio-downloader.py
 
 # Nur Dokumente umbenennen
 python tools/ai-renamer.py
@@ -135,7 +135,7 @@ Du kannst die Einstellungen jederzeit über das Menü (Option 4) ändern.
 ### Downloader
 
 ```bash
-python tools/downloader.py --download-dir /pfad/zu/downloads
+python tools/bexio-downloader.py --download-dir /pfad/zu/downloads
 ```
 
 ### AI Renamer

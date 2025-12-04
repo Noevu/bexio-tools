@@ -16,6 +16,12 @@ from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Enable readline for better input editing (arrow keys, cursor movement)
+try:
+    import readline
+except ImportError:
+    pass  # readline not available on Windows
+
 # Add parent directory to path for lib imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

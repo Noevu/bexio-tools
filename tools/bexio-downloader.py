@@ -9,7 +9,15 @@ import sys
 import urllib.request
 import urllib.error
 import argparse
+import threading
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Enable readline for better input editing (arrow keys, cursor movement)
+try:
+    import readline
+except ImportError:
+    pass  # readline not available on Windows
 
 # Add parent directory to path for lib imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -74,7 +82,8 @@ def main():
         while True:
             token = input("Bitte gib den Personal Access Token ein [oder 'q' zum Beenden]: ").strip()
             if token.lower() in ['q', 'quit', 'exit', 'beenden']:
-                print("  App wird beendet.")
+                print_copyright()
+                print("  Bye bye 👋")
                 sys.exit(0)
             if token:
                 break
@@ -92,6 +101,7 @@ def main():
         path_input = input(f"  Zielordner [Standard: {default_path}]: ").strip()
         
         if path_input.lower() in ['q', 'quit', 'exit', 'beenden']:
+            print_copyright()
             print("  Bye bye 👋")
             sys.exit(0)
 
@@ -124,6 +134,7 @@ def main():
     option_input = input("  > ").strip()
     
     if option_input.lower() in ['q', 'quit', 'exit', 'beenden']:
+        print_copyright()
         print("  Bye bye 👋")
         sys.exit(0)
     
@@ -160,8 +171,14 @@ def main():
         print(f"  (Drücke Ctrl+C zum Abbrechen)")
         print()
 
-        # --- 5. Download-Schleife ---
-        for doc in docs:
+        # --- 5. Parallel Download ---
+        downloaded = 0
+        failed = 0
+        total = len(docs)
+        lock = threading.Lock()
+        
+        def download_file(doc):
+            nonlocal downloaded, failed
             raw_name = f"{doc.get('name')}.{doc.get('extension')}"
             filename = sanitize_filename(raw_name)
             full_path = path / filename
@@ -169,13 +186,30 @@ def main():
             file_id = doc.get('id')
             download_url = f"https://api.bexio.com/3.0/files/{file_id}/download"
             
-            print(f"  ⬇️  {filename}")
-
-            dl_req = urllib.request.Request(download_url, headers=headers)
-            
-            with urllib.request.urlopen(dl_req) as dl_response:
-                with open(str(full_path), 'wb') as f:
-                    f.write(dl_response.read())
+            try:
+                dl_req = urllib.request.Request(download_url, headers=headers)
+                with urllib.request.urlopen(dl_req) as dl_response:
+                    with open(str(full_path), 'wb') as f:
+                        f.write(dl_response.read())
+                
+                with lock:
+                    downloaded += 1
+                    print(f"  ✓ [{downloaded}/{total}] {filename}")
+                return True
+            except Exception as e:
+                with lock:
+                    failed += 1
+                    print(f"  ❌ {filename}: {e}")
+                return False
+        
+        # Download with up to 20 parallel threads
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            futures = [executor.submit(download_file, doc) for doc in docs]
+            for _ in as_completed(futures):
+                pass  # Results handled in download_file
+        
+        if failed > 0:
+            print(f"\n  ⚠️  {failed} Datei(en) fehlgeschlagen")
 
     except KeyboardInterrupt:
         print("\n\n" + "─" * 70)

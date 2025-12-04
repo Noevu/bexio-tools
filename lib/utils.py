@@ -79,3 +79,135 @@ def get_project_root() -> Path:
 def get_data_dir() -> Path:
     """Returns the data directory path."""
     return get_project_root() / "data"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ARROW KEY MENU SELECTION (no external dependencies)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _get_key():
+    """Read a single keypress. Returns special keys as strings like 'up', 'down', 'enter'."""
+    system = platform.system()
+    
+    if system == "Windows":
+        import msvcrt
+        key = msvcrt.getch()
+        if key == b'\r':
+            return 'enter'
+        elif key == b'\x1b':
+            return 'escape'
+        elif key == b'\xe0':  # Arrow key prefix on Windows
+            key2 = msvcrt.getch()
+            if key2 == b'H':
+                return 'up'
+            elif key2 == b'P':
+                return 'down'
+        return key.decode('utf-8', errors='ignore')
+    else:
+        import sys
+        import tty
+        import termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+            if ch == '\x1b':  # Escape sequence
+                ch2 = sys.stdin.read(1)
+                if ch2 == '[':
+                    ch3 = sys.stdin.read(1)
+                    if ch3 == 'A':
+                        return 'up'
+                    elif ch3 == 'B':
+                        return 'down'
+                    elif ch3 == 'C':
+                        return 'right'
+                    elif ch3 == 'D':
+                        return 'left'
+                return 'escape'
+            elif ch == '\r' or ch == '\n':
+                return 'enter'
+            elif ch == '\x03':  # Ctrl+C
+                raise KeyboardInterrupt
+            return ch
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+
+def select_menu(options: list, title: str = None, selected_idx: int = 0) -> int:
+    """
+    Display an interactive menu with arrow key navigation.
+    
+    Args:
+        options: List of option strings to display
+        title: Optional title to show above menu
+        selected_idx: Initial selected index
+    
+    Returns:
+        Selected index (0-based), or -1 if cancelled
+    """
+    import sys
+    
+    def render():
+        # Move cursor up to redraw menu
+        if hasattr(render, 'rendered'):
+            # Move up: title (if any) + options + 1 for hint
+            lines_up = len(options) + (1 if title else 0) + 1
+            sys.stdout.write(f"\033[{lines_up}A")
+        
+        if title:
+            print(f"  {title}")
+        
+        for i, option in enumerate(options):
+            if i == selected_idx:
+                print(f"  \033[7m  {option}  \033[0m")  # Inverted colors for selection
+            else:
+                print(f"     {option}  ")
+        
+        print("  ↑↓ Auswählen  Enter Bestätigen  q Abbrechen", end="", flush=True)
+        render.rendered = True
+    
+    try:
+        render()
+        
+        while True:
+            key = _get_key()
+            
+            if key == 'up':
+                selected_idx = (selected_idx - 1) % len(options)
+                render()
+            elif key == 'down':
+                selected_idx = (selected_idx + 1) % len(options)
+                render()
+            elif key == 'enter':
+                print()  # New line after selection
+                return selected_idx
+            elif key in ('q', 'escape'):
+                print()
+                return -1
+                
+    except KeyboardInterrupt:
+        print()
+        return -1
+
+
+def confirm(prompt: str, default: bool = True) -> bool:
+    """
+    Display a yes/no confirmation with arrow key selection.
+    
+    Args:
+        prompt: Question to ask
+        default: Default value (True = Yes, False = No)
+    
+    Returns:
+        True for Yes, False for No
+    """
+    options = ["Ja", "Nein"]
+    selected = 0 if default else 1
+    
+    print(f"  {prompt}")
+    result = select_menu(options, selected_idx=selected)
+    
+    if result == -1:  # Cancelled
+        return default
+    return result == 0  # 0 = Ja, 1 = Nein

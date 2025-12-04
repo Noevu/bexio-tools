@@ -6,6 +6,12 @@ import os
 import sys
 from pathlib import Path
 
+# Enable readline for better input editing (arrow keys, cursor movement)
+try:
+    import readline
+except ImportError:
+    pass  # readline not available on Windows
+
 # Add current directory to path for lib imports
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -19,7 +25,7 @@ from lib import get_config, open_url, open_directory, clear_screen
 def print_intro():
     """Zeigt einen hübschen Intro Screen."""
     print("\n" + "─" * 70)
-    print(" " * 18 + "🤖 BEXIO-TOOLS CLI")
+    print("  🤖 BEXIO-TOOLS CLI")
     print("  Dokumentenmanagement mit KI-Unterstützung")
     print("─" * 70)
 
@@ -56,6 +62,7 @@ def prompt_api_key(config):
     while True:
         api_key = input("  Google API Key [oder 'q' zum Beenden]: ").strip()
         if api_key.lower() in ['q', 'quit', 'exit']:
+            print_copyright()
             print("  Bye bye 👋")
             sys.exit(0)
         if api_key:
@@ -78,6 +85,7 @@ def prompt_company_name(config):
     while True:
         name = input("  Firmenname [oder 'q' zum Beenden]: ").strip()
         if name.lower() in ['q', 'quit', 'exit']:
+            print_copyright()
             print("  Bye bye 👋")
             sys.exit(0)
         if name:
@@ -205,8 +213,9 @@ def run_downloader(config):
         os.environ["COMPANY_NAME"] = config.company_name
     
     try:
-        from tools.downloader import main as downloader_main
-        downloader_main()
+        import subprocess
+        downloader_path = Path(__file__).parent / "tools" / "bexio-downloader.py"
+        subprocess.run([sys.executable, str(downloader_path)], check=False)
     except Exception as e:
         print(f"  ❌ Fehler: {e}")
 
@@ -225,8 +234,6 @@ def run_renamer(config):
         os.environ["CUSTOM_PROMPT_SUFFIX"] = config.custom_prompt_suffix
     
     try:
-        from tools import ai_renamer
-        # Need to use subprocess because of hyphens in filename
         import subprocess
         renamer_path = Path(__file__).parent / "tools" / "ai-renamer.py"
         subprocess.run([sys.executable, str(renamer_path)], check=False)
@@ -303,6 +310,58 @@ def show_main_menu(config):
 # ENTRY POINT
 # ─────────────────────────────────────────────────────────────────────────────
 
+def check_and_use_env_key(env_names: list, key_label: str, config_getter, config_setter):
+    """
+    Prüft ob ein Key in env vars vorhanden ist und fragt ob er verwendet werden soll.
+    Returns: (key_value, was_set)
+    """
+    # Check environment variables
+    env_value = None
+    for env_name in env_names:
+        env_value = os.environ.get(env_name)
+        if env_value:
+            break
+    
+    # Check saved config
+    saved_value = config_getter()
+    
+    if env_value:
+        masked = env_value[:8] + "..." + env_value[-4:] if len(env_value) > 12 else "***"
+        print(f"  {key_label} gefunden (Umgebungsvariable): {masked}")
+        use_it = input("  Verwenden? (j/n) [j]: ").strip().lower()
+        if use_it not in ['n', 'nein', 'no']:
+            config_setter(env_value)
+            return env_value, True
+    elif saved_value:
+        masked = saved_value[:8] + "..." + saved_value[-4:] if len(saved_value) > 12 else "***"
+        print(f"  {key_label} gefunden (gespeichert): {masked}")
+        use_it = input("  Verwenden? (j/n) [j]: ").strip().lower()
+        if use_it not in ['n', 'nein', 'no']:
+            return saved_value, True
+    
+    return None, False
+
+
+def prompt_for_key(key_label: str, help_url: str, config_setter):
+    """Fragt nach einem Key wenn keiner gefunden wurde."""
+    print(f"\n  💡 {key_label} erstellen: {help_url}")
+    
+    open_choice = input(f"  Im Browser öffnen? (j/n): ").strip().lower()
+    if open_choice in ['j', 'y', 'ja', 'yes']:
+        open_url(help_url)
+    
+    while True:
+        key = input(f"  {key_label} [oder 'q' zum Beenden]: ").strip()
+        if key.lower() in ['q', 'quit', 'exit']:
+            print_copyright()
+            print("  Bye bye 👋")
+            sys.exit(0)
+        if key:
+            config_setter(key)
+            return key
+        print(f"  ⚠️  Bitte gib einen gültigen {key_label} ein.")
+
+
 def main():
     """Main entry point."""
     config = get_config()
@@ -310,28 +369,80 @@ def main():
     clear_screen()
     print_intro()
     
-    print("\n  🔑 KONFIGURATION")
+    print("\n  🔧 KONFIGURATION")
     print("─" * 70)
     
-    if not config.google_api_key:
-        print("  Kein API Key gefunden.")
-        prompt_api_key(config)
+    # 1. FIRMENNAME ZUERST
+    if config.company_name:
+        print(f"\n  Aktueller Firmenname: {config.company_name}")
+        change = input("  Ändern? (j/n) [n]: ").strip().lower()
+        if change in ['j', 'y', 'ja', 'yes']:
+            name = input("  Neuer Firmenname: ").strip()
+            if name:
+                config.company_name = name
     else:
-        os.environ["GOOGLE_API_KEY"] = config.google_api_key
-        print("  ✓ API Key geladen")
+        while True:
+            name = input("\n  Firmenname [oder 'q' zum Beenden]: ").strip()
+            if name.lower() in ['q', 'quit', 'exit']:
+                print_copyright()
+                print("  Bye bye 👋")
+                sys.exit(0)
+            if name:
+                config.company_name = name
+                break
+            print("  ⚠️  Bitte gib einen gültigen Firmennamen ein.")
     
-    if not config.company_name:
-        print("  Kein Firmenname gefunden.")
-        prompt_company_name(config)
+    os.environ["COMPANY_NAME"] = config.company_name
+    print(f"  ✓ Firma: {config.company_name}")
+    
+    # 2. GOOGLE API KEY (prüfe env zuerst)
+    print()
+    api_key, found = check_and_use_env_key(
+        ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
+        "Google API Key",
+        lambda: config.google_api_key,
+        lambda v: setattr(config, 'google_api_key', v)
+    )
+    
+    if not found:
+        print("  Kein Google API Key gefunden.")
+        api_key = prompt_for_key(
+            "Google API Key",
+            "https://aistudio.google.com/",
+            lambda v: setattr(config, 'google_api_key', v)
+        )
+    
+    os.environ["GOOGLE_API_KEY"] = api_key
+    print("  ✓ Google API Key konfiguriert")
+    
+    # 3. BEXIO ACCESS TOKEN (prüfe env zuerst)
+    print()
+    bexio_token, found = check_and_use_env_key(
+        ["BEXIO_ACCESS_TOKEN"],
+        "Bexio Access Token",
+        lambda: config.get("bexio_access_token", ""),
+        lambda v: config.set("bexio_access_token", v)
+    )
+    
+    if found and bexio_token:
+        os.environ["BEXIO_ACCESS_TOKEN"] = bexio_token
+        print("  ✓ Bexio Token konfiguriert")
     else:
-        os.environ["COMPANY_NAME"] = config.company_name
-        print(f"  ✓ Firma: {config.company_name}")
+        print("  ℹ️  Kein Bexio Token - wird beim Download abgefragt")
     
-    if not config.custom_prompt_suffix and not config.has_required_settings():
-        prompt_custom_prompt(config)
+    # 4. Custom prompt (optional)
+    if not config.custom_prompt_suffix:
+        print()
+        print("  🎨 Custom AI-Anweisung (optional, Enter um zu überspringen):")
+        custom = input("  > ").strip()
+        if custom:
+            config.custom_prompt_suffix = custom
+            print("  ✓ Custom-Anweisung gespeichert")
     
+    print()
     show_main_menu(config)
 
 
 if __name__ == "__main__":
     main()
+
