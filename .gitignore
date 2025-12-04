@@ -61,3 +61,13 @@ accounts.csv
 
 # Misc
 Thumbs.db
+
+# Data directories
+downloads/*
+!downloads/.gitkeep
+benannt/*
+!benannt/.gitkeep
+verarbeitet/*
+!verarbeitet/.gitkeep
+logs/*
+!logs/.gitkeep

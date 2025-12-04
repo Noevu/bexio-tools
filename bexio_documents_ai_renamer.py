@@ -379,12 +379,17 @@ def process_file(filepath: Path, args, company_name: str, gemini_cmd: list, file
         env = os.environ.copy()
         if args.allow_ignored:
             env.update({"MODEL_CONTEXT_ALLOW_IGNORED_FILES": "1", "MODEL_CONTEXT_DISABLE_GITIGNORE": "1"})
+
+        # Prepare command arguments
+        cmd_args = gemini_cmd + ["--model", args.model]
+        
+        # Disable MCP by allowing only a dummy server name if requested
         if args.disable_mcp:
-            env["MODEL_CONTEXT_DISABLE_MCP"] = "1"
+            cmd_args.extend(["--allowed-mcp-server-names", "__DISABLED__"])
 
         # Run Gemini mit cwd im downloads-Ordner
         proc = subprocess.run(
-            gemini_cmd + ["--model", args.model],
+            cmd_args,
             input=prompt, text=True, capture_output=True, env=env,
             cwd=filepath.parent
         )
@@ -455,6 +460,7 @@ def print_intro():
     print("\n" + "─" * 70)
     print(" " * 15 + "🤖 BEXIO DOKUMENTE AI RENAMER")
     print("  Automatische Umbenennung von Finanzdokumenten mit Gemini AI")
+    print("\n  Format: YYYY-MM-DD - Issuer - DocType: Recipient - Customer - Account - Description.ext")
     print("\n  💡 Tipp: Du kannst jederzeit mit 'q' abbrechen")
     print()
 
