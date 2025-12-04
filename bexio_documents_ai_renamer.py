@@ -296,30 +296,73 @@ def sanitize_part(text: str) -> str:
     text = re.sub(r'[<>:"/\\|?*]', '', text)
     return text.strip()
 
-def parse_json_and_build_filename(raw_output: str, original_ext: str, company_name: str) -> str | None:
+def extract_data_from_json(raw_output: str) -> dict | None:
     try:
         match = re.search(r'(\{.*\})', raw_output, re.DOTALL)
         if not match: return None
-        data = json.loads(match.group(1))
-        
-        date = data.get("date")
-        if not date: return None # Force manual if no date
-            
-        issuer = sanitize_part(data.get("issuer", "Unbekannt"))
-        doc_type = sanitize_part(data.get("document_type", "Anderes"))
-        recipient = sanitize_part(data.get("recipient", company_name))
-        customer = sanitize_part(data.get("customer", ""))
-        account = sanitize_part(data.get("account", "Unbekannt"))
-        description = sanitize_part(data.get("description", ""))
-        
-        base_name = f"{date} - {issuer} - {doc_type}: {recipient} - "
-        if customer: base_name += f"{customer} - "
-        base_name += f"{account} - {description}"
-        
-        full_name = f"{base_name}.{original_ext}".replace("\n", " ").replace("\r", "")
-        return full_name
+        return json.loads(match.group(1))
     except:
         return None
+
+def interactive_fill_missing_fields(data: dict, filepath: Path, company_name: str) -> dict:
+    """
+    Prüft auf fehlende Pflichtfelder und fragt diese gezielt ab.
+    Optional: customer (wird ignoriert wenn fehlt)
+    Auto-Fill: recipient (wird auf company_name gesetzt wenn fehlt)
+    """
+    # Pflichtfelder die abgefragt werden müssen
+    mandatory_fields = {
+        "date": "Datum (YYYY-MM-DD)",
+        "issuer": "Aussteller",
+        "document_type": "Dokumenttyp (Rechnung/Quittung/etc)",
+        "account": "Konto",
+        "description": "Beschreibung"
+    }
+    
+    # Auto-Fill Recipient if missing
+    if not data.get("recipient"):
+        data["recipient"] = company_name
+
+    # Prüfe welche Felder fehlen oder leer sind
+    missing = [k for k in mandatory_fields if not data.get(k)]
+    
+    if not missing:
+        return data
+        
+    with CONSOLE_LOCK:
+        print(f"\n{'!'*60}")
+        print(f"FEHLENDE DATEN: {filepath.name}")
+        print(f"{'-'*60}")
+        
+        # Öffne Datei damit User sie sehen kann
+        open_file(filepath)
+        
+        for field in missing:
+            label = mandatory_fields[field]
+            while True:
+                value = input(f"  > Bitte eingeben: {label}: ").strip()
+                if value:
+                    data[field] = value
+                    break
+        print(f"{'-'*60}\n")
+            
+    return data
+
+def construct_filename(data: dict, original_ext: str, company_name: str) -> str:
+    date = data.get("date")
+    issuer = sanitize_part(data.get("issuer", "Unbekannt"))
+    doc_type = sanitize_part(data.get("document_type", "Anderes"))
+    recipient = sanitize_part(data.get("recipient", company_name))
+    customer = sanitize_part(data.get("customer", ""))
+    account = sanitize_part(data.get("account", "Unbekannt"))
+    description = sanitize_part(data.get("description", ""))
+    
+    base_name = f"{date} - {issuer} - {doc_type}: {recipient} - "
+    if customer: base_name += f"{customer} - "
+    base_name += f"{account} - {description}"
+    
+    full_name = f"{base_name}.{original_ext}".replace("\n", " ").replace("\r", "")
+    return full_name
 
 def get_unique_path(directory: Path, filename: str) -> Path:
     target = directory / filename
@@ -337,7 +380,7 @@ def manual_intervention(filepath: Path, raw_output: str, original_ext: str) -> s
     # Output mit Lock (damit Ausgaben nicht durcheinander kommen)
     with CONSOLE_LOCK:
         print(f"\n{'!'*60}")
-        print(f"FEHLER BEIM PARSEN: {filepath.name}")
+        print(f"FEHLER BEIM PARSEN (JSON ungültig): {filepath.name}")
         print(f"{'-'*20} Gemini Ausgabe {'-'*20}")
         # Print first 5 lines of output or full if short
         lines = raw_output.strip().splitlines()
@@ -404,10 +447,15 @@ def process_file(filepath: Path, args, company_name: str, gemini_cmd: list, file
             f.write(f"=== {get_now_iso()} | {filepath.name} ===\n{clean_output}\n")
 
         # Attempt to Parse
-        new_filename = parse_json_and_build_filename(clean_output, ext, company_name)
+        data = extract_data_from_json(clean_output)
+        new_filename = None
         
-        # HITL (Human In The Loop) if failure
-        if not new_filename:
+        if data:
+            # Smart Intervention: Fill missing fields interactively
+            data = interactive_fill_missing_fields(data, filepath, company_name)
+            new_filename = construct_filename(data, ext, company_name)
+        else:
+            # Fallback: Full Manual Intervention if JSON is invalid
             user_result = manual_intervention(filepath, clean_output, ext)
             if user_result == "SKIP":
                 log_entry = f"ÜBERSPRUNGEN | {filepath.name} | - | Gemini Output:\n{clean_output}"
