@@ -445,13 +445,16 @@ def main():
                 search_payload = []
                 # Get primary filter criteria
                 if option == '4': # Seit Datum
-                    date_input = input("  Datum (JJJJ-MM-TT): ").strip()
-                    try:
-                        date_obj = datetime.strptime(date_input, '%Y-%m-%d').replace(tzinfo=timezone.utc)
-                        search_payload.append({"field": "created_at", "value": date_obj.isoformat(), "criteria": ">="})
-                    except ValueError:
-                        print("❌ Ungültiges Datumsformat.")
-                        sys.exit(1)
+                    while True:
+                        date_input = input("  Datum (JJJJ-MM-TT)]: ").strip()
+                        if date_input.lower() in ['q', 'quit']:
+                            break
+                        try:
+                            date_obj = datetime.strptime(date_input, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                            search_payload.append({"field": "created_at", "value": date_obj.isoformat(), "criteria": ">="})
+                            break
+                        except ValueError:
+                            print("  ❌ Ungültiges Datumsformat. Bitte erneut versuchen.")
 
                 elif option == '5': # Letzte X Tage
                     days_input = input("  Anzahl Tage: ").strip()
@@ -464,18 +467,35 @@ def main():
                         sys.exit(1)
 
                 elif option == '7': # Zeitraum
-                    start_date_input = input("  Start-Datum (JJJJ-MM-TT): ").strip()
-                    end_date_input = input("  End-Datum (JJJJ-MM-TT): ").strip()
-                    try:
-                        start_date = datetime.strptime(start_date_input, '%Y-%m-%d').replace(tzinfo=timezone.utc)
-                        end_date = datetime.strptime(end_date_input, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
-                        search_payload.extend([
-                            {"field": "created_at", "value": start_date.isoformat(), "criteria": ">="},
-                            {"field": "created_at", "value": end_date.isoformat(), "criteria": "<="}
-                        ])
-                    except ValueError:
-                        print("❌ Ungültiges Datumsformat.")
-                        sys.exit(1)
+                    start_date = None
+                    while not start_date:
+                        start_date_input = input("  Start-Datum (JJJJ-MM-TT) [oder 'q' zum Abbrechen]: ").strip()
+                        if start_date_input.lower() in ['q', 'quit']:
+                            break
+                        try:
+                            start_date = datetime.strptime(start_date_input, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                        except ValueError:
+                            print("  ❌ Ungültiges Datumsformat für Start-Datum. Bitte erneut versuchen.")
+                    
+                    if start_date: # Only ask for end date if start date was given
+                        end_date = None
+                        while not end_date:
+                            end_date_input = input("  End-Datum (JJJJ-MM-TT): ").strip()
+                            if end_date_input.lower() in ['q', 'quit']:
+                                break
+                            try:
+                                end_date = datetime.strptime(end_date_input, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+                                if end_date < start_date:
+                                    print("  ❌ End-Datum kann nicht vor dem Start-Datum liegen.")
+                                    end_date = None # Reset to re-ask
+                            except ValueError:
+                                print("  ❌ Ungültiges Datumsformat für End-Datum. Bitte erneut versuchen.")
+                        
+                        if end_date: # Only add to payload if both dates are valid
+                            search_payload.extend([
+                                {"field": "created_at", "value": start_date.isoformat(), "criteria": ">="},
+                                {"field": "created_at", "value": end_date.isoformat(), "criteria": "<="}
+                            ])
                 
                 elif option == '8': # Nach Name
                     name_input = input("  Dateiname (oder Teil davon): ").strip()
@@ -487,13 +507,14 @@ def main():
 
                 # --- Handle search execution ---
                 if option in ['4', '5', '7', '8']:
-                    archive_state = ask_archive_status()
-                    ref_criterion = ask_referenced_status()
-                    if ref_criterion:
-                        search_payload.append(ref_criterion)
-                    
-                    search_url = f"https://api.bexio.com/3.0/files/search?archived_state={archive_state}"
-                    docs = fetch_files_from_bexio(token, search_url, data=search_payload)
+                    if search_payload: # Only proceed if user provided valid input and did not quit
+                        archive_state = ask_archive_status()
+                        ref_criterion = ask_referenced_status()
+                        if ref_criterion:
+                            search_payload.append(ref_criterion)
+                        
+                        search_url = f"https://api.bexio.com/3.0/files/search?archived_state={archive_state}"
+                        docs = fetch_files_from_bexio(token, search_url, data=search_payload)
                 
                 elif option == '6': # Letzte X Dateien - special handling
                     count_input = input("  Anzahl Dateien: ").strip()
