@@ -68,5 +68,5 @@ data/benannt/*
 !data/benannt/.gitkeep
 data/verarbeitet/*
 !data/verarbeitet/.gitkeep
-data/logs/*
-!data/logs/.gitkeep
+*/logs/*
+!*/logs/.gitkeep
