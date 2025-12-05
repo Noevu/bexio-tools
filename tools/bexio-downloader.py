@@ -125,39 +125,48 @@ def download_files_in_parallel(docs, path, token):
     def download_file(doc):
         nonlocal downloaded, failed
         raw_name = f"{doc.get('name')}.{doc.get('extension')}"
-        filename = sanitize_filename(raw_name)
-        full_path = path / filename
-
-        # Handle duplicate filenames by appending a counter
+        original_filename = sanitize_filename(raw_name)
+        
+        filename_to_try = original_filename
         counter = 1
-        stem = full_path.stem
-        suffix = full_path.suffix
-        while full_path.exists():
-            full_path = path / f"{stem}_{counter}{suffix}"
-            counter += 1
         
-        # If the path was changed, update the filename variable for logging
-        if counter > 1:
-            filename = full_path.name
-        
-        file_id = doc.get('id')
-        download_url = f"https://api.bexio.com/3.0/files/{file_id}/download"
-        
-        try:
-            dl_req = urllib.request.Request(download_url, headers=headers)
-            with urllib.request.urlopen(dl_req) as dl_response:
-                with open(str(full_path), 'wb') as f:
-                    f.write(dl_response.read())
+        while True:
+            full_path = path / filename_to_try
+            try:
+                # Use exclusive creation mode 'x' to atomically create the file.
+                # This prevents race conditions in parallel downloads.
+                with open(full_path, 'xb') as f:
+                    file_id = doc.get('id')
+                    download_url = f"https://api.bexio.com/3.0/files/{file_id}/download"
+                    
+                    dl_req = urllib.request.Request(download_url, headers=headers)
+                    with urllib.request.urlopen(dl_req) as dl_response:
+                        f.write(dl_response.read())
+
+                with lock:
+                    downloaded += 1
+                    print(f"  ✓ [{downloaded}/{total}] {filename_to_try}")
+                return True
+
+            except FileExistsError:
+                # If file exists, generate a new name and retry.
+                stem = Path(original_filename).stem
+                suffix = Path(original_filename).suffix
+                filename_to_try = f"{stem}_{counter}{suffix}"
+                counter += 1
             
-            with lock:
-                downloaded += 1
-                print(f"  ✓ [{downloaded}/{total}] {filename}")
-            return True
-        except Exception as e:
-            with lock:
-                failed += 1
-                print(f"  ❌ {filename}: {e}")
-            return False
+            except Exception as e:
+                with lock:
+                    failed += 1
+                    print(f"  ❌ {filename_to_try}: {e}")
+                
+                # If we created a file but the download failed, try to clean it up.
+                if full_path.exists():
+                    try:
+                        os.remove(full_path)
+                    except OSError:
+                        pass # Ignore cleanup errors, it's not critical.
+                return False
             
     with ThreadPoolExecutor(max_workers=20) as executor:
         futures = [executor.submit(download_file, doc) for doc in docs]
