@@ -24,10 +24,10 @@ from lib import get_config, open_url, open_directory, clear_screen
 
 def print_intro():
     """Zeigt einen hübschen Intro Screen."""
-    print("\n" + "─" * 70)
-    print("  🤖 BEXIO-TOOLS CLI")
+    print("\n\n" + "=" * 70)
+    print("  🤖 BEXIO-TOOLS")
     print("  Dokumentenmanagement mit KI-Unterstützung")
-    print("─" * 70)
+    print("=" * 70)
 
 
 def print_copyright():
@@ -130,49 +130,77 @@ def prompt_custom_prompt(config):
 
 
 def configure_settings(config):
-    """Zeigt Einstellungen-Menü."""
+    """Zeigt das detaillierte Einstellungsmenü, in dem jede Option einzeln geändert werden kann."""
     while True:
         clear_screen()
         print("\n" + "─" * 70)
-        print("  ⚙️  EINSTELLUNGEN")
+        print("  ⚙️  EINSTELLUNGEN ANPASSEN")
         print("─" * 70)
         
-        masked_key = config.google_api_key
-        if masked_key:
-            masked_key = masked_key[:8] + "..." + masked_key[-4:] if len(masked_key) > 12 else "***"
-        
-        print(f"\n  [1] 🔑 API Key:        {masked_key or '(nicht gesetzt)'}")
-        print(f"  [2] 🏢 Firmenname:     {config.company_name or '(nicht gesetzt)'}")
-        print(f"  [3] 🤖 AI Modell:      {config.model}")
-        print(f"  [4] ⚡ Parallelität:   {config.concurrency}")
-        print(f"  [5] 🎨 Custom-Prompt:  {'✓ Gesetzt' if config.custom_prompt_suffix else '(nicht gesetzt)'}")
-        print(f"\n  [6] 📁 Ordner-Einstellungen")
-        print(f"\n  [0] ← Zurück zum Hauptmenü")
+        # Mask API key for display
+        masked_api = config.google_api_key or ""
+        if masked_api:
+            masked_api = masked_api[:8] + "..." + masked_api[-4:] if len(masked_api) > 12 else "***"
+
+        # Mask Bexio token for display
+        masked_bexio = ""
+        try:
+            bex = config.get("bexio_access_token", "")
+            if bex:
+                masked_bexio = bex[:8] + "..." + bex[-4:] if len(bex) > 12 else "***"
+        except Exception:
+            masked_bexio = "(nicht abrufbar)"
+
+        print("\n  Wähle die Einstellung, die du ändern möchtest:\n")
+        print(f"  [1] 🏢 Firmenname:      {config.company_name or '(nicht gesetzt)'}")
+        print(f"  [2] 🔑 API Key:         {masked_api or '(nicht gesetzt)'}")
+        print(f"  [3] 🔐 Bexio Token:     {masked_bexio or '(wird bei Bedarf gefragt)'}")
+        print(f"  [4] 🤖 AI Modell:       {config.model}")
+        print(f"  [5] ⚡ Parallelität:    {config.concurrency}")
+        print(f"  [6] ⭐ Default Workflow: {config.default_workflow or '(nicht gesetzt)'}")
+        print(f"  [7] 🎨 Custom Prompt:   {'✓ Gesetzt' if config.custom_prompt_suffix else '(nicht gesetzt)'}")
+        print(f"  [8] 📁 Ordner")
+        print("\n  [0] ← Zurück zum Hauptmenü")
         print("─" * 70)
         
         choice = input("  Auswahl: ").strip()
         
-        if choice == "0":
+        if choice in ["0", ""]:
             break
         elif choice == "1":
-            prompt_api_key(config)
-        elif choice == "2":
             prompt_company_name(config)
+        elif choice == "2":
+            prompt_api_key(config)
         elif choice == "3":
-            new_model = input(f"  Neues Modell [{config.model}]: ").strip()
+            new_token = input("  Neuer Bexio Token [leer lassen zum Abbrechen]: ").strip()
+            if new_token:
+                config.set("bexio_access_token", new_token)
+        elif choice == "4":
+            new_model = input(f"  Neues AI Modell [{config.model}]: ").strip()
             if new_model:
                 config.model = new_model
-        elif choice == "4":
-            try:
-                new_conc = int(input(f"  Neue Parallelität [{config.concurrency}]: ").strip() or config.concurrency)
-                if new_conc > 0:
-                    config.concurrency = new_conc
-            except ValueError:
-                pass
         elif choice == "5":
-            prompt_custom_prompt(config)
+            try:
+                new_conc_str = input(f"  Neue Parallelität [{config.concurrency}]: ").strip()
+                if new_conc_str:
+                    new_conc = int(new_conc_str)
+                    if new_conc > 0:
+                        config.concurrency = new_conc
+            except (ValueError, TypeError):
+                print("  ⚠️ Ungültige Zahl. Parallelität nicht geändert.")
+                input("  Enter zum Fortfahren...")
         elif choice == "6":
+            print("  Mögliche Workflows: 'download', 'rename', 'both'")
+            new_default = input(f"  Neuer Default Workflow [{config.default_workflow}]: ").strip().lower()
+            if new_default in ["download", "rename", "both", ""]:
+                config.default_workflow = new_default
+        elif choice == "7":
+            prompt_custom_prompt(config)
+        elif choice == "8":
             configure_directories(config)
+        else:
+            print("  ⚠️ Ungültige Auswahl.")
+            input("  Enter zum Fortfahren...")
 
 
 def configure_directories(config):
@@ -245,7 +273,7 @@ def run_both(config):
     """Führt Download und Rename nacheinander aus."""
     run_downloader(config)
     print("\n" + "─" * 70)
-    print("  ✓ Download abgeschlossen. Starte Umbenennung...")
+    print("  ✅ Download abgeschlossen. Starte Umbenennung...")
     print("─" * 70)
     run_renamer(config)
 
@@ -255,34 +283,29 @@ def run_both(config):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def show_main_menu(config):
-    """Zeigt das Hauptmenü."""
-    default = config.default_workflow
-    
+    """Zeigt das Hauptmenü an, nachdem die grundlegende Konfiguration abgeschlossen ist."""
     while True:
         clear_screen()
         print_intro()
         
-        print("\n  🔧 HAUPTMENÜ")
-        print("─" * 70)
+        company_name = getattr(config, 'company_name', 'Benutzer')
+        print(f"\n\n  Hallo {company_name} 👋 was möchtest du tun? \n\n")
         
-        if config.company_name:
-            print(f"  Firma: {config.company_name}")
-        print()
-        
+        default = config.default_workflow
         options = [
             ("1", "📥", "Dokumente von Bexio herunterladen", "download"),
-            ("2", "📝", "Vorhandene Dokumente umbenennen", "rename"),
-            ("3", "📥📝", "Herunterladen UND Umbenennen", "both"),
+            ("2", "🤖", "Vorhandene Dokumente mit AI umbenennen", "rename"),
+            ("3", "📥 + 🤖", "Herunterladen UND Umbenennen", "both"),
         ]
-        
+
         for num, icon, label, key in options:
             default_marker = " ★" if key == default else ""
             print(f"  [{num}] {icon} {label}{default_marker}")
         
         print()
-        print(f"  [4] ⚙️  Einstellungen")
-        print(f"  [q] 🚪 Beenden")
-        print("─" * 70)
+        print(f"  [e] ⚙️  Einstellungen anpassen")
+        print(f"  [q] 👋 Beenden")
+        print("\n")
         
         choice = input("  Auswahl: ").strip().lower()
         
@@ -293,17 +316,20 @@ def show_main_menu(config):
         elif choice == '1':
             config.default_workflow = "download"
             run_downloader(config)
-            input("\n  Enter zum Fortfahren...")
+            input("\n  Enter zum Hauptmenü...")
         elif choice == '2':
             config.default_workflow = "rename"
             run_renamer(config)
-            input("\n  Enter zum Fortfahren...")
+            input("\n  Enter zum Hauptmenü...")
         elif choice == '3':
             config.default_workflow = "both"
             run_both(config)
-            input("\n  Enter zum Fortfahren...")
-        elif choice == '4':
+            input("\n  Enter zum Hauptmenü...")
+        elif choice == 'e':
             configure_settings(config)
+        else:
+            print("\n  ⚠️  Ungültige Auswahl.")
+            input("  Enter zum Wiederholen...")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -328,14 +354,14 @@ def check_and_use_env_key(env_names: list, key_label: str, config_getter, config
     if env_value:
         masked = env_value[:8] + "..." + env_value[-4:] if len(env_value) > 12 else "***"
         print(f"  {key_label} gefunden (Umgebungsvariable): {masked}")
-        use_it = input("  Verwenden? (j/n) [j]: ").strip().lower()
+        use_it = input("  Verwenden? (J/n): ").strip().lower()
         if use_it not in ['n', 'nein', 'no']:
             config_setter(env_value)
             return env_value, True
     elif saved_value:
         masked = saved_value[:8] + "..." + saved_value[-4:] if len(saved_value) > 12 else "***"
         print(f"  {key_label} gefunden (gespeichert): {masked}")
-        use_it = input("  Verwenden? (j/n) [j]: ").strip().lower()
+        use_it = input("  Verwenden? (J/n): ").strip().lower()
         if use_it not in ['n', 'nein', 'no']:
             return saved_value, True
     
@@ -366,80 +392,26 @@ def main():
     """Main entry point."""
     config = get_config()
     
-    clear_screen()
-    print_intro()
+    # Standard-Parallelität sicherstellen: Default = 20
+    if not getattr(config, "concurrency", None) or int(getattr(config, "concurrency", 0)) <= 0:
+        config.concurrency = 20
     
-    print("\n  🔧 KONFIGURATION")
-    print("─" * 70)
-    
-    # 1. FIRMENNAME ZUERST
-    if config.company_name:
-        print(f"\n  Aktueller Firmenname: {config.company_name}")
-        change = input("  Ändern? (j/n) [n]: ").strip().lower()
-        if change in ['j', 'y', 'ja', 'yes']:
-            name = input("  Neuer Firmenname: ").strip()
-            if name:
-                config.company_name = name
-    else:
-        while True:
-            name = input("\n  Firmenname [oder 'q' zum Beenden]: ").strip()
-            if name.lower() in ['q', 'quit', 'exit']:
-                print_copyright()
-                print("  Bye bye 👋")
-                sys.exit(0)
-            if name:
-                config.company_name = name
-                break
-            print("  ⚠️  Bitte gib einen gültigen Firmennamen ein.")
-    
-    os.environ["COMPANY_NAME"] = config.company_name
-    print(f"  ✓ Firma: {config.company_name}")
-    
-    # 2. GOOGLE API KEY (prüfe env zuerst)
-    print()
-    api_key, found = check_and_use_env_key(
-        ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
-        "Google API Key",
-        lambda: config.google_api_key,
-        lambda v: setattr(config, 'google_api_key', v)
-    )
-    
-    if not found:
-        print("  Kein Google API Key gefunden.")
-        api_key = prompt_for_key(
-            "Google API Key",
-            "https://aistudio.google.com/",
-            lambda v: setattr(config, 'google_api_key', v)
-        )
-    
-    os.environ["GOOGLE_API_KEY"] = api_key
-    print("  ✓ Google API Key konfiguriert")
-    
-    # 3. BEXIO ACCESS TOKEN (prüfe env zuerst)
-    print()
-    bexio_token, found = check_and_use_env_key(
-        ["BEXIO_ACCESS_TOKEN"],
-        "Bexio Access Token",
-        lambda: config.get("bexio_access_token", ""),
-        lambda v: config.set("bexio_access_token", v)
-    )
-    
-    if found and bexio_token:
-        os.environ["BEXIO_ACCESS_TOKEN"] = bexio_token
-        print("  ✓ Bexio Token konfiguriert")
-    else:
-        print("  ℹ️  Kein Bexio Token - wird beim Download abgefragt")
-    
-    # 4. Custom prompt (optional)
-    if not config.custom_prompt_suffix:
-        print()
-        print("  🎨 Custom AI-Anweisung (optional, Enter um zu überspringen):")
-        custom = input("  > ").strip()
-        if custom:
-            config.custom_prompt_suffix = custom
-            print("  ✓ Custom-Anweisung gespeichert")
-    
-    print()
+    # Prüfen, ob eine Erstkonfiguration notwendig ist
+    if not config.company_name or not config.google_api_key:
+        clear_screen()
+        print_intro()
+        print("\n  Willkommen! Lass uns die Ersteinrichtung durchführen.")
+        
+        # 1. FIRMENNAME
+        prompt_company_name(config)
+        
+        # 2. GOOGLE API KEY
+        prompt_api_key(config)
+        
+        print("\n  ✓ Ersteinrichtung abgeschlossen!")
+        input("  Enter um zum Hauptmenü zu gelangen...")
+
+    # Nach der Einrichtung (oder wenn sie schon existiert) das Hauptmenü anzeigen
     show_main_menu(config)
 
 
