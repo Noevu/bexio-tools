@@ -26,7 +26,7 @@ except ImportError:
 # Add parent directory to path for lib imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lib.utils import open_url, open_file, open_directory, set_finder_comment, get_data_dir
+from lib.utils import open_url, open_file, open_directory, set_finder_comment, get_data_dir, print_copyright
 
 # --- CONFIGURATION ---
 DEFAULT_MODEL = os.environ.get("MODEL", "gemini-2.5-flash")
@@ -514,12 +514,6 @@ def print_intro():
     print()
 
 
-def print_copyright():
-    """Zeigt Copyright-Informationen."""
-    print("\n" + "-" * 70)
-    print("  Copyright © Noevu GmbH – AI Lösungen für Schweizer KMU")
-    print("  https://noevu.ch/ai-beratung-kmu-schweiz?utm_source=bexio_ai_renamer")
-    print("-" * 70 + "\n")
 
 
 def main():
@@ -563,18 +557,11 @@ def main():
     
     global log, RAW_DIR
     RAW_DIR = args.log_dir / "gemini_raw"
-    log_file = args.log_dir / f"{APP_NAME}.log"
-    logger = logging.getLogger("processor")
-    logger.setLevel(logging.INFO)
-    logger.handlers.clear()
-    fh = logging.FileHandler(log_file, encoding='utf-8')
-    fh.setFormatter(logging.Formatter('%(asctime)s | %(message)s'))
-    logger.addHandler(fh)
-    ch = logging.StreamHandler()
-    ch.setFormatter(logging.Formatter('%(message)s'))
-    logger.addHandler(ch)
-    log = logger
     
+    from lib.logger import setup_app_logger
+    log = setup_app_logger("processor", f"{APP_NAME}.log")
+    
+    # Configure startup (now that logging is set up)
     configure_startup(args)
 
     files = sorted([f for f in args.input_dir.iterdir() if f.is_file() and f.suffix.lower() in EXTENSIONS])

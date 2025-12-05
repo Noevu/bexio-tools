@@ -72,8 +72,8 @@ def set_finder_comment(filepath: Path, comment: str):
 
 
 def get_project_root() -> Path:
-    """Returns the project root directory."""
-    return Path(__file__).parent.parent
+    """Gibt den Pfad zum Projekt-Root-Verzeichnis zurück."""
+    return Path(__file__).parent.parent.resolve()
 
 
 def get_data_dir() -> Path:
@@ -211,3 +211,11 @@ def confirm(prompt: str, default: bool = True) -> bool:
     if result == -1:  # Cancelled
         return default
     return result == 0  # 0 = Ja, 1 = Nein
+
+
+def print_copyright():
+    """Zeigt Copyright-Informationen."""
+    print("\n" + "-" * 70)
+    print("  Copyright © Noevu GmbH – AI Lösungen für Schweizer KMU")
+    print("  https://noevu.ch/ai-beratung-kmu-schweiz?utm_source=bexio_tools")
+    print("-" * 70 + "\n")

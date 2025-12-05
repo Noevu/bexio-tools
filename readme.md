@@ -132,11 +132,56 @@ Du kannst die Einstellungen jederzeit über das Menü (Option 4) ändern.
 
 ## Nutzung mit Parametern
 
-### Downloader
+### Downloader - Interaktives Menü
+
+Wenn du den Downloader ohne Parameter startest (`python tools/bexio-downloader.py`), erscheint ein interaktives Menü.
+
+```
+  ⚙️  DOWNLOAD-OPTIONEN
+----------------------------------------------------------------------
+  [1] ✅ Alle Dateien herunterladen (inkl. Archiv)
+  [2] 📥 Nur Inbox herunterladen (nicht archiviert)
+  [3] 🗃️  Nur archivierte Dateien herunterladen
+
+  --- Nach Kriterien filtern ---
+  [4] 🗓️  Dateien seit Datum...
+  [5] 📅 Dateien aus den letzten X Tagen...
+  [6] 🔢 Die letzten X Dateien...
+  [7] ⏳ Dateien in Zeitraum...
+  [8] 🔍 Dateien nach Name suchen...
+----------------------------------------------------------------------
+```
+
+**Direkte Downloads (Optionen 1-3):**
+Diese Optionen führen einen sofortigen Download des gewählten Umfangs aus, ohne weitere Rückfragen.
+
+**Gefilterte Suche (Optionen 4-8):**
+Wenn du eine dieser Optionen wählst, stellt das Skript nach der Eingabe des Hauptkriteriums (z.B. Datum) zwei Folgefragen, um die Suche zu verfeinern:
+1.  **Archiv-Status:** Wähle, ob alle, nur archivierte oder nur nicht-archivierte Dateien durchsucht werden sollen.
+2.  **Verknüpfungs-Status:** Wähle, ob alle Dateien oder nur solche, die mit Belegen etc. verknüpft sind, berücksichtigt werden sollen.
+
+### Downloader - CLI Parameter
 
 ```bash
-python tools/bexio-downloader.py --download-dir /pfad/zu/downloads
+# Alle Dateien der letzten 30 Tage herunterladen (inkl. archivierte)
+python tools/bexio-downloader.py --days 30
+
+# Debug-Modus aktivieren, um API-Antworten zu loggen
+python tools/bexio-downloader.py --days 30 --debug
 ```
+
+| Parameter | Beschreibung |
+|-----------|--------------|
+| `--download-dir` | Ordner für heruntergeladene Dateien. |
+| `--name` | Lade Dateien, die den Suchbegriff im Namen enthalten. |
+| `--date-range START END` | Lade Dateien innerhalb eines Zeitraums (JJJJ-MM-TT). |
+| `--since` | Lade Dateien, die seit diesem Datum erstellt wurden (JJJJ-MM-TT). |
+| `--days` | Lade Dateien aus den letzten X Tagen. |
+| `--latest` | Lade die X neuesten Dateien. |
+| `--all` | Lade alle Dateien (inkl. archivierte). |
+| `--not-archived` | Lade nur nicht-archivierte Dateien. |
+| `--inbox` | Lade nur Dateien aus der Inbox. |
+| `--debug`| Aktiviert das Logging von API-Anfragen an `data/logs/bexio-api-debug.log`.|
 
 ### AI Renamer
 
