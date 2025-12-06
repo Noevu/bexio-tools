@@ -53,9 +53,9 @@ Stelle sicher, dass auf deinem System **Python 3** installiert ist.
 Damit die künstliche Intelligenz deine Belege direkt den richtigen Buchhaltungskonten zuordnen kann, benötigt sie deinen Kontenplan.
 
 1.  Exportiere deinen Kontenplan aus Bexio als **CSV-Datei**.
-2.  Speichere diese Datei unter dem Namen `accounts-beispiel.csv` im Ordner `data/`.
+2.  Speichere diese Datei unter dem Namen `accounts.csv` im Ordner `data/` oder benenne die Beispiel DAteu `accounts-beispiel.csv` um.
 
-**Format der `accounts-beispiel.csv` (Semikolon als Trennzeichen):**
+**Format der `accounts.csv` (Semikolon als Trennzeichen):**
 ```csv
 Konto;Beschreibung;Typ
 6000;Raumaufwand Miete;Aufwand
