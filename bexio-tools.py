@@ -232,7 +232,7 @@ def configure_directories(config):
 
 def run_downloader(config):
     """Führt den Dokument-Downloader aus."""
-    print("\n  📥 Starte Dokument-Downloader...")
+    print("\n  📥 Starte Dokument-Exporter...")
     print("─" * 70 + "\n")
     
     if config.google_api_key:
@@ -242,7 +242,7 @@ def run_downloader(config):
     
     try:
         import subprocess
-        downloader_path = Path(__file__).parent / "tools" / "bexio-downloader.py"
+        downloader_path = Path(__file__).parent / "tools" / "bexio-document-exporter.py"
         subprocess.run([sys.executable, str(downloader_path)], check=False)
     except Exception as e:
         print(f"  ❌ Fehler: {e}")

@@ -1,20 +1,102 @@
-# Bexio Tools: Downloader & AI Renamer
+# Bexio Tools: Dein digitaler Assistent für eine saubere Buchhaltung
+_Von Noevu GmbH_
 
-By Noevu GmbH
+**Hol dir die Kontrolle über deine Geschäftsbelege zurück.**
 
-**Deine Daten gehören dir.**
+Dieses Projekt bietet eine Sammlung von Kommandozeilen-Tools, die den Umgang mit Buchhaltungsbelegen aus [Bexio](https://bexio.com) revolutionieren. Lade Hunderte von Dokumenten mit einem Klick herunter, benenne sie automatisch mit künstlicher Intelligenz (Google Gemini) und bereite sie für die revisionssichere Archivierung vor.
 
-Dieses Projekt besteht aus einer CLI-Anwendung und zwei Tools, die dir helfen, deine Buchhaltungsbelege vollständig aus Bexio zu exportieren und mittels künstlicher Intelligenz (Google Gemini) automatisch zu analysieren, zu benennen und zu sortieren.
+**Deine Daten. Deine Kontrolle. Keine Paywalls.**
 
-## Hintergrund & Motivation
+## Das Problem: Manuelle Buchhaltung ist mühsam
 
-Wir waren frustriert. Lösungen wie der [Kontera Belegexport](https://help.kontera.ch/de/articles/8906695-beleg-download) sind für Basisfunktionen wie den Download der _eigenen_ Dokumente kostenpflichtig. Wir finden: Der Zugriff auf die eigenen Geschäftsunterlagen sollte keine Paywall haben.
+Jeder, der Bexio nutzt, kennt es:
+- **Manueller Download:** Jeden Beleg einzeln herunterladen, um ihn extern zu sichern.
+- **Chaotische Dateinamen:** `Scan_2024_08_15.pdf` oder `Beleg-123.jpg` sagen nichts über den Inhalt aus.
+- **Zeitaufwand:** Stundenlanges Sortieren und Umbenennen vor dem Jahresabschluss oder für den Treuhänder.
+- **Archivierungslücke:** Wie gelangen die Dokumente aus Bexio einfach und strukturiert in ein revisionssicheres Archiv wie [ePost von der Schweizerischen Post](https://www.epost.ch/de-ch/geschaeftskunden/ablegen)?
 
-**Unsere Ziele:**
+## Die Lösung: Automatisierung mit Bexio-Tools
 
-1. **Datenhoheit:** Kostenloser und vollständiger Export aller Belege.
-2. **Automatisierung:** Kein manuelles Umbenennen von `Scan_2023_X.pdf` mehr.
-3. **Archivierung:** Vorbereitung für eine revisionssichere Ablage (z.B. in [E-Post der Schweizerischen Post](https://www.epost.ch/de-ch/geschaeftskunden/ablegen) oder einem DMS).
+Unsere Tools nehmen dir diese Arbeit ab.
+1.  **Bexio Dokumenten-Exporter:** Lade dein gesamtes Belegarchiv – oder nur eine Auswahl – mit einem einzigen Befehl herunter.
+2.  **AI-Renamer:** Analysiert den Inhalt jedes Dokuments, erkennt Datum, Betrag, Lieferant sowie Buchhaltungskonto und benennt die Datei nach einem sauberen Schema: `JJJJ-MM-TT - Lieferant - Betrag - Beschreibung.pdf`.
+
+**Das Ergebnis:** Ein perfekt organisierter Ordner, bereit für die langfristige, revisionssichere Ablage oder die Übergabe an deinen Treuhänder.
+
+---
+
+## Anleitung: In 5 Minuten startklar
+
+Folge diesen Schritten, um die Tools einzurichten und zu nutzen.
+
+### Schritt 1: Voraussetzungen schaffen
+Stelle sicher, dass auf deinem System **Python 3** installiert ist.
+
+### Schritt 2: Konfiguration
+
+1.  **API Keys erstellen:**
+    *   **Bexio Access Token:** Erstelle unter [developer.bexio.com/pat](https://developer.bexio.com/pat) einen persönlichen Token. Speichere ihn sicher, er wird nur einmal angezeigt.
+    *   **Google Gemini API Key:** Erstelle unter [aistudio.google.com](https://aistudio.google.com/) einen kostenlosen API Key für das KI-Modell.
+
+2.  **Projekt herunterladen & starten:**
+    *   Lade dieses Projekt als ZIP herunter oder klone es.
+    *   Öffne ein Terminal im Projektordner und starte die Anwendung:
+      ```bash
+      python bexio-tools.py
+      ```
+
+3.  **Geführte Einrichtung:**
+    *   Beim ersten Start wirst du nach deinem **Firmennamen** sowie den beiden **API Keys** gefragt. Diese werden lokal auf deinem Computer für die zukünftige Nutzung gespeichert.
+
+### Schritt 3: Kontenplan hinterlegen (Empfohlen)
+
+Damit die künstliche Intelligenz deine Belege direkt den richtigen Buchhaltungskonten zuordnen kann, benötigt sie deinen Kontenplan.
+
+1.  Exportiere deinen Kontenplan aus Bexio als **CSV-Datei**.
+2.  Speichere diese Datei unter dem Namen `accounts-beispiel.csv` im Ordner `data/`.
+
+**Format der `accounts-beispiel.csv` (Semikolon als Trennzeichen):**
+```csv
+Konto;Beschreibung;Typ
+6000;Raumaufwand Miete;Aufwand
+6200;Fahrzeugunterhalt;Aufwand
+6500;Büromaterial;Aufwand
+```
+
+### Schritt 4: Tools anwenden
+
+Nach der Einrichtung begrüsst dich das Hauptmenü.
+
+1.  **Option 1: Dokumente herunterladen**
+    *   Wähle diese Option, um den **Dokumenten-Exporter** zu starten.
+    *   Ein interaktives Menü lässt dich wählen, welche Dokumente du laden möchtest (z.B. nur die der letzten 30 Tage, alle aus der Inbox etc.).
+    *   Die Dateien werden im Ordner `data/downloads` gespeichert.
+
+2.  **Option 2: Dokumente mit AI umbenennen**
+    *   Wähle diese Option, um den **AI-Renamer** auf die Dateien im `data/downloads`-Ordner anzuwenden.
+    *   Das Tool verarbeitet jede Datei, benennt sie um und verschiebt sie in den Ordner `data/benannt`. Die Originale werden in `data/verarbeitet` archiviert.
+
+3.  **Option 3: Herunterladen UND Umbenennen**
+    *   Der vollautomatische Workflow. Führt beide Schritte nacheinander aus.
+
+### Schritt 5: Archivieren
+Deine sauber benannten Belege im Ordner `data/benannt` sind nun bereit, in ein System wie **ePost** oder ein anderes digitales Archiv hochgeladen zu werden.
+
+---
+
+## Detaillierte Tool-Optionen
+
+Beide Werkzeuge können auch direkt und mit spezifischen Parametern aufgerufen werden.
+
+### Bexio Dokumenten-Exporter
+`python tools/bexio-document-exporter.py`
+
+Startet ein interaktives Menü mit vielen Filteroptionen. Alternativ sind Kommandozeilen-Parameter verfügbar (z.B. `--days 30`, um die Belege der letzten 30 Tage zu laden).
+
+### AI-Renamer
+`python tools/ai-renamer.py`
+
+Verarbeitet standardmässig die Dateien aus `data/downloads`. Auch hier können über Parameter andere Ordner oder Limits definiert werden.
 
 ---
 
@@ -22,197 +104,37 @@ Wir waren frustriert. Lösungen wie der [Kontera Belegexport](https://help.konte
 
 ```
 Bexio-Tools/
-├── bexio-tools.py          # 🤖 Haupteinstiegspunkt (CLI mit Menü)
-├── readme.md
-├── LICENSE
-│
-├── lib/                    # Shared Library
-│   ├── config.py           # Konfigurationsmanager (persistente Einstellungen)
-│   └── utils.py            # Hilfsfunktionen
-│
-├── tools/                  # Einzelne Tools (auch standalone nutzbar)
-│   ├── bexio-downloader.py       # Bexio Dokument-Downloader
-│   └── ai-renamer.py       # KI-basierte Umbenennung
-│
-└── data/                   # Laufzeitdaten
-    ├── accounts.csv        # Dein Kontenplan
-    ├── downloads/          # Heruntergeladene Dateien
-    ├── benannt/            # Umbenannte Dateien
-    ├── verarbeitet/        # Archiv der Originale
-    └── logs/               # Log-Dateien
+├── bexio-tools.py              # 🤖 Haupteinstiegspunkt (CLI mit Menü)
+├── readme.md                   # Diese Anleitung
+├───.gitignore
+├───LICENSE
+├───__pycache__/
+├───.gemini/
+│   └───.env.example
+├───.git/...
+├───data/
+│   ├───accounts-beispiel.csv   # Dein Kontenplan (hier ablegen!)
+│   ├───benannt/                # ✅ Fertig benannte Dokumente
+│   ├───downloads/              # 📥 Hier landen die Bexio-Downloads
+│   ├───logs/
+│   └───verarbeitet/            # 🗄️ Archiv der Originaldateien
+├───lib/                        # Geteilte Code-Bibliothek
+│   ├───__init__.py
+│   ├───config.py
+│   ├───logger.py
+│   └───utils.py
+└───tools/
+    ├───__init__.py
+    ├───ai-renamer.py           # KI-basiertes Umbenennungs-Tool
+    └───bexio-document-exporter.py # Tool für den Dokumenten-Download
 ```
-
----
-
-## Die Tools
-
-1. **`bexio-tools.py`**: Unified CLI mit Menü – der einfachste Weg, alle Funktionen zu nutzen.
-2. **`tools/bexio-downloader.py`**: Lädt alle Dokumente (Inbox oder Archiv) aus deinem Bexio-Konto herunter.
-3. **`tools/ai-renamer.py`**: Analysiert den Inhalt der Dateien mit Google Gemini, benennt sie logisch um.
-
-## Voraussetzungen
-
-- **Python 3** installiert.
-- **Node.js & npm** installiert (wird für das KI-Interface benötigt).
-- Ein **Bexio-Konto**.
-- Ein **Google AI Studio Konto** (kostenlos).
-
----
-
-## Schnellstart
-
-### Mit der CLI (Empfohlen)
-
-```bash
-python bexio-tools.py
-```
-
-Das CLI führt dich durch alle Schritte:
-1. API Key eingeben (wird gespeichert in `~/.bexio-tools/config.json`)
-2. Firmenname eingeben
-3. Menü: Download, Rename, oder beides
-
-### Einzelne Tools direkt aufrufen
-
-```bash
-# Nur Dokumente herunterladen
-python tools/bexio-downloader.py
-
-# Nur Dokumente umbenennen
-python tools/ai-renamer.py
-```
-
----
-
-## Einrichtung
-
-### 1. Bexio Token (für den Downloader)
-
-Damit das Skript Dateien laden darf, benötigst du einen **Personal Access Token**.
-
-1. Gehe zu [developer.bexio.com/pat](https://developer.bexio.com/pat).
-2. Logge dich ein und erstelle einen Token.
-3. Kopiere den Token sofort (er wird nur einmal angezeigt).
-
-### 2. Google Gemini API Key (für den Renamer)
-
-Damit die KI deine Belege lesen kann.
-
-1. Gehe zu [Google AI Studio](https://aistudio.google.com/).
-2. Erstelle einen **API Key**.
-
-### 3. Kontenplan (Optional, aber empfohlen)
-
-Erstelle im `data/` Ordner eine Datei namens `accounts.csv`. Das KI-Skript nutzt diese, um den Belegen direkt das korrekte Buchhaltungskonto zuzuweisen.
-
-**Format der `accounts.csv` (Trennzeichen: Semikolon):**
-
-```csv
-6000;Raumaufwand Miete;Aufwand
-6200;Fahrzeugunterhalt;Aufwand
-6500;Büromaterial;Aufwand
-6570;Strom, Wasser, Gas;Aufwand
-```
-
----
-
-## Konfiguration
-
-Die CLI speichert deine Einstellungen automatisch in `~/.bexio-tools/config.json`:
-
-- API Key
-- Firmenname
-- Custom AI-Anweisungen (z.B. "Dokumente an Person X als Privatauslage markieren")
-- Ordner-Pfade
-- Modell & Parallelität
-
-Du kannst die Einstellungen jederzeit über das Menü (Option 4) ändern.
-
----
-
-## Nutzung mit Parametern
-
-### Downloader - Interaktives Menü
-
-Wenn du den Downloader ohne Parameter startest (`python tools/bexio-downloader.py`), erscheint ein interaktives Menü.
-
-```
-  ⚙️  DOWNLOAD-OPTIONEN
-----------------------------------------------------------------------
-  [1] ✅ Alle Dateien herunterladen (inkl. Archiv)
-  [2] 📥 Nur Inbox herunterladen (nicht archiviert)
-  [3] 🗃️  Nur archivierte Dateien herunterladen
-
-  --- Nach Kriterien filtern ---
-  [4] 🗓️  Dateien seit Datum...
-  [5] 📅 Dateien aus den letzten X Tagen...
-  [6] 🔢 Die letzten X Dateien...
-  [7] ⏳ Dateien in Zeitraum...
-  [8] 🔍 Dateien nach Name suchen...
-----------------------------------------------------------------------
-```
-
-**Direkte Downloads (Optionen 1-3):**
-Diese Optionen führen einen sofortigen Download des gewählten Umfangs aus, ohne weitere Rückfragen.
-
-**Gefilterte Suche (Optionen 4-8):**
-Wenn du eine dieser Optionen wählst, stellt das Skript nach der Eingabe des Hauptkriteriums (z.B. Datum) zwei Folgefragen, um die Suche zu verfeinern:
-1.  **Archiv-Status:** Wähle, ob alle, nur archivierte oder nur nicht-archivierte Dateien durchsucht werden sollen.
-2.  **Verknüpfungs-Status:** Wähle, ob alle Dateien oder nur solche, die mit Belegen etc. verknüpft sind, berücksichtigt werden sollen.
-
-### Downloader - CLI Parameter
-
-```bash
-# Alle Dateien der letzten 30 Tage herunterladen (inkl. archivierte)
-python tools/bexio-downloader.py --days 30
-
-# Debug-Modus aktivieren, um API-Antworten zu loggen
-python tools/bexio-downloader.py --days 30 --debug
-```
-
-| Parameter | Beschreibung |
-|-----------|--------------|
-| `--download-dir` | Ordner für heruntergeladene Dateien. |
-| `--name` | Lade Dateien, die den Suchbegriff im Namen enthalten. |
-| `--date-range START END` | Lade Dateien innerhalb eines Zeitraums (JJJJ-MM-TT). |
-| `--since` | Lade Dateien, die seit diesem Datum erstellt wurden (JJJJ-MM-TT). |
-| `--days` | Lade Dateien aus den letzten X Tagen. |
-| `--latest` | Lade die X neuesten Dateien. |
-| `--all` | Lade alle Dateien (inkl. archivierte). |
-| `--not-archived` | Lade nur nicht-archivierte Dateien. |
-| `--inbox` | Lade nur Dateien aus der Inbox. |
-| `--debug`| Aktiviert das Logging von API-Anfragen an `data/logs/bexio-api-debug.log`.|
-
-### AI Renamer
-
-```bash
-python tools/ai-renamer.py \
-  --input-dir data/downloads \
-  --out-dir data/benannt \
-  --archive-dir data/verarbeitet \
-  --log-dir data/logs \
-  --model gemini-2.5-flash \
-  --concurrency 4
-```
-
-**Parameter:**
-
-| Parameter | Beschreibung | Standard |
-|-----------|--------------|----------|
-| `--input-dir` | Ordner mit zu verarbeitenden Dateien | `data/downloads` |
-| `--out-dir` | Ordner für umbenannte Dateien | `data/benannt` |
-| `--archive-dir` | Ordner für verarbeitete Originale | `data/verarbeitet` |
-| `--log-dir` | Ordner für Log-Dateien | `data/logs` |
-| `--model` | Gemini Modell | `gemini-2.5-flash` |
-| `-c, --concurrency` | Anzahl gleichzeitiger Threads | `4` |
-| `--limit` | Maximale Anzahl Dateien | `0` (alle) |
 
 ---
 
 ## Lizenz & Rechtliches
 
-Dieses Projekt steht unter der **MIT Lizenz**. Nutzung auf eigene Verantwortung.
+Dieses Projekt steht unter der **MIT Lizenz**. Die Nutzung erfolgt auf eigene Verantwortung.
 
-Die Tools basieren auf Open-Source-Code und nutzen die APIs von Bexio und Google. Bitte beachte die Datenschutzbestimmungen der jeweiligen Anbieter, insbesondere beim Upload von sensiblen Firmendaten zur Analyse an Google.
+Die Tools nutzen die offiziellen APIs von Bexio und Google. Bitte beachte die Datenschutzbestimmungen der jeweiligen Anbieter, insbesondere beim Upload von sensiblen Firmendaten zur Analyse durch Google.
 
-**[Copyright © Noevu GmbH – AI Lösungen für Schweizer KMU](https://noevu.ch/ai-beratung-kmu-schweiz?utm_source=bexio-tools)**
+**[Copyright © Noevu GmbH – KI-Lösungen für Schweizer KMU](https://noevu.ch/ai-beratung-kmu-schweiz?utm_source=bexio-tools)**
