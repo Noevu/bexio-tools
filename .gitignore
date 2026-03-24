@@ -58,6 +58,16 @@ data/accounts.csv
 # Template file (safe to keep in repo)
 !data/accounts-beispiel.csv
 
+# Generated AI config (managed by rulesync)
+.claude/
+.cursor/
+.github/
+.codex/
+CLAUDE.md
+AGENTS.md
+.cursorignore
+.mcp.json
+
 # Misc
 Thumbs.db
 

@@ -3,7 +3,7 @@ _Von Noevu GmbH_
 
 **Hol dir die Kontrolle über deine Geschäftsbelege zurück.**
 
-Dieses Projekt bietet eine Sammlung von Kommandozeilen-Tools, die den Umgang mit Buchhaltungsbelegen aus [Bexio](https://bexio.com) revolutionieren. Lade Hunderte von Dokumenten mit einem Klick herunter, benenne sie automatisch mit künstlicher Intelligenz (Google Gemini) und bereite sie für die revisionssichere Archivierung vor.
+Dieses Projekt bietet eine Sammlung von Kommandozeilen-Tools, die den Umgang mit Buchhaltungsbelegen aus [Bexio](https://bexio.com) revolutionieren. Lade Hunderte von Dokumenten mit einem Klick herunter, benenne sie automatisch mit künstlicher Intelligenz (Claude AI) und bereite sie für die revisionssichere Archivierung vor.
 
 **Deine Daten. Deine Kontrolle. Keine Paywalls.**
 
@@ -30,13 +30,16 @@ Unsere Tools nehmen dir diese Arbeit ab.
 Folge diesen Schritten, um die Tools einzurichten und zu nutzen.
 
 ### Schritt 1: Voraussetzungen schaffen
-Stelle sicher, dass auf deinem System **Python 3** installiert ist.
+
+Stelle sicher, dass folgende Tools installiert sind:
+- **Python 3**
+- **Claude Code CLI** — installieren via [claude.ai/claude-code](https://docs.anthropic.com/en/docs/claude-code) (benötigt Max Subscription oder API Key)
 
 ### Schritt 2: Konfiguration
 
-1.  **API Keys erstellen:**
-    *   **Bexio Access Token:** Erstelle unter [developer.bexio.com/pat](https://developer.bexio.com/pat) einen persönlichen Token. Speichere ihn sicher, er wird nur einmal angezeigt.
-    *   **Google Gemini API Key:** Erstelle unter [aistudio.google.com](https://aistudio.google.com/) einen kostenlosen API Key für das KI-Modell.
+1.  **Bexio Access Token erstellen:**
+    *   Erstelle unter [developer.bexio.com/pat](https://developer.bexio.com/pat) einen persönlichen Token.
+    *   Speichere ihn sicher, er wird nur einmal angezeigt.
 
 2.  **Projekt herunterladen & starten:**
     *   Lade dieses Projekt als ZIP herunter oder klone es.
@@ -46,14 +49,14 @@ Stelle sicher, dass auf deinem System **Python 3** installiert ist.
       ```
 
 3.  **Geführte Einrichtung:**
-    *   Beim ersten Start wirst du nach deinem **Firmennamen** sowie den beiden **API Keys** gefragt. Diese werden lokal auf deinem Computer für die zukünftige Nutzung gespeichert.
+    *   Beim ersten Start wirst du nach deinem **Firmennamen** gefragt. Claude Code CLI handhabt die AI-Authentifizierung automatisch.
 
 ### Schritt 3: Kontenplan hinterlegen (Empfohlen)
 
 Damit die künstliche Intelligenz deine Belege direkt den richtigen Buchhaltungskonten zuordnen kann, benötigt sie deinen Kontenplan.
 
 1.  Exportiere deinen Kontenplan aus Bexio als **CSV-Datei**.
-2.  Speichere diese Datei unter dem Namen `accounts.csv` im Ordner `data/` oder benenne die Beispiel DAteu `accounts-beispiel.csv` um.
+2.  Speichere diese Datei unter dem Namen `accounts.csv` im Ordner `data/` oder benenne die Beispieldatei `accounts-beispiel.csv` um.
 
 **Format der `accounts.csv` (Semikolon als Trennzeichen):**
 ```csv
@@ -106,27 +109,24 @@ Verarbeitet standardmässig die Dateien aus `data/downloads`. Auch hier können 
 Bexio-Tools/
 ├── bexio-tools.py              # 🤖 Haupteinstiegspunkt (CLI mit Menü)
 ├── readme.md                   # Diese Anleitung
-├───.gitignore
-├───LICENSE
-├───__pycache__/
-├───.gemini/
-│   └───.env.example
-├───.git/...
-├───data/
-│   ├───accounts-beispiel.csv   # Dein Kontenplan (hier ablegen!)
-│   ├───benannt/                # ✅ Fertig benannte Dokumente
-│   ├───downloads/              # 📥 Hier landen die Bexio-Downloads
-│   ├───logs/
-│   └───verarbeitet/            # 🗄️ Archiv der Originaldateien
-├───lib/                        # Geteilte Code-Bibliothek
-│   ├───__init__.py
-│   ├───config.py
-│   ├───logger.py
-│   └───utils.py
-└───tools/
-    ├───__init__.py
-    ├───ai-renamer.py           # KI-basiertes Umbenennungs-Tool
-    └───bexio-document-exporter.py # Tool für den Dokumenten-Download
+├── .gitignore
+├── .rulesync/                  # AI-Konfiguration (Claude, Gemini, Codex)
+├── LICENSE
+├── data/
+│   ├── accounts-beispiel.csv   # Dein Kontenplan (hier ablegen!)
+│   ├── benannt/                # ✅ Fertig benannte Dokumente
+│   ├── downloads/              # 📥 Hier landen die Bexio-Downloads
+│   ├── logs/
+│   └── verarbeitet/            # 🗄️ Archiv der Originaldateien
+├── lib/                        # Geteilte Code-Bibliothek
+│   ├── __init__.py
+│   ├── config.py
+│   ├── logger.py
+│   └── utils.py
+└── tools/
+    ├── __init__.py
+    ├── ai-renamer.py           # KI-basiertes Umbenennungs-Tool (Claude AI)
+    └── bexio-document-exporter.py # Tool für den Dokumenten-Download
 ```
 
 ---
@@ -135,6 +135,6 @@ Bexio-Tools/
 
 Dieses Projekt steht unter der **MIT Lizenz**. Die Nutzung erfolgt auf eigene Verantwortung.
 
-Die Tools nutzen die offiziellen APIs von Bexio und Google. Bitte beachte die Datenschutzbestimmungen der jeweiligen Anbieter, insbesondere beim Upload von sensiblen Firmendaten zur Analyse durch Google.
+Die Tools nutzen die offiziellen APIs von Bexio und Anthropic (Claude). Bitte beachte die Datenschutzbestimmungen der jeweiligen Anbieter, insbesondere beim Upload von sensiblen Firmendaten zur Analyse.
 
 **[Copyright © Noevu GmbH – KI-Lösungen für Schweizer KMU](https://noevu.ch/ai-beratung-kmu-schweiz?utm_source=bexio-tools)**
