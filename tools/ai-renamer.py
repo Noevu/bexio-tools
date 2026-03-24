@@ -190,7 +190,7 @@ Das "account" Feld sollte im Format "Nummer - Name" sein (z.B. "4400 – Einkauf
     custom_section = f"\n\nZusätzliche Anweisungen:\n{custom_suffix}" if custom_suffix else ""
 
     return f"""Du bist ein erfahrener Buchhaltungsassistent.
-Deine Aufgabe ist es, strukturierte Daten aus der Datei {filepath.resolve()} zu extrahieren, damit diese ordnungsgemäss umbenannt werden kann.
+Deine Aufgabe ist es, strukturierte Daten aus der Datei {filepath.resolve()} zu extrahieren, damit diese ordnungsgemäss umbenannt und in der Buchhaltung erfasst werden kann.
 
 Lies die Datei und analysiere den Inhalt (Bild oder PDF) und den Dateinamen.
 Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt. Keine Markdown-Formatierung, kein Text davor oder danach.
@@ -203,6 +203,10 @@ Das JSON muss folgende Felder enthalten:
   "recipient": "Empfänger",      // Default: "{company_name}". Wenn nicht {company_name}, dann ist der Empfänger ein Kunde.
   "customer": "Kundenname",      // Optional: Name des Kunden, falls zutreffend (sonst null oder leerer String).
   "account": "Konto",            // Das Aufwandskonto
+  "amount": 0.00,                // Rechnungsbetrag als Zahl (z.B. 150.00). Falls nicht auffindbar: null.
+  "currency": "CHF",             // Währung: "CHF", "EUR", "USD" oder "BRL". Default: "CHF".
+  "reference": "Referenz",       // Rechnungsnummer oder Referenz-ID. Falls nicht auffindbar: null.
+  "due_date": "YYYY-MM-DD",     // Fälligkeitsdatum falls angegeben. Sonst: null.
   "description": "Beschreibung"  // Kurze Beschreibung der Transaktion (max 5-6 Wörter, Deutsch).
 }}
 
@@ -422,6 +426,19 @@ def process_file(filepath: Path, args, company_name: str, claude_cmd: str, file_
         if data:
             data = interactive_fill_missing_fields(data, filepath, company_name)
             new_filename = construct_filename(data, ext, company_name)
+
+            # Save structured sidecar JSON with all extracted fields (for Notion import)
+            sidecar_dir = args.out_dir / ".metadata"
+            sidecar_dir.mkdir(parents=True, exist_ok=True)
+            sidecar_data = {
+                "source_file": filepath.name,
+                "renamed_to": new_filename,
+                "extracted_at": get_now_iso(),
+                **data
+            }
+            sidecar_path = sidecar_dir / f"{Path(new_filename).stem}.json"
+            with open(sidecar_path, "w", encoding="utf-8") as f:
+                json.dump(sidecar_data, f, indent=2, ensure_ascii=False)
         else:
             user_result = manual_intervention(filepath, clean_output, ext)
             if user_result == "SKIP":

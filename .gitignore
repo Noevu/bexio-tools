@@ -76,6 +76,7 @@ data/downloads/*
 !data/downloads/.gitkeep
 data/benannt/*
 !data/benannt/.gitkeep
+data/benannt/.metadata/
 data/verarbeitet/*
 !data/verarbeitet/.gitkeep
 */logs/*
