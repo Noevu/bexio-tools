@@ -58,6 +58,9 @@ data/accounts.csv
 # Template file (safe to keep in repo)
 !data/accounts-beispiel.csv
 
+# Local-only tools (Notion sync, amount extraction)
+local/
+
 # Generated AI config (managed by rulesync)
 .claude/
 .cursor/
