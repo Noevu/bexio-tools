@@ -1,0 +1,150 @@
+Auf meinem MacBook Air gibt es irgendwo einen Ordner mit von Vexio heruntergeladenen Dokumenten und von Gemini umbenannten Dokumenten kannst du diesen ausfindig machen. Es ist ein GitHub-Projekt. https://github.com/Noevu/bexio-tools < Ich möchte dieses Projekt hier rüber kopieren und in den Projektordnung nehmen. Dann möchte ich ihn auf Claude anpassen. Ich möchte dann außerdem alle alten Rechnungen in der neuen Rechnungen Tabelle in Notion hinterlegen. /noevu-plan
+
+---
+
+Base directory for this skill: /Users/noel/.claude/skills/noevu-plan
+
+# Noevu Plan
+
+Create a structured implementation plan. **Do not write code in this step.**
+
+Write plans assuming the implementer has zero context for the codebase. Document everything needed: which files to touch, what changes, how to test, how to verify. Give the whole plan as bite-sized tasks.
+
+## Workflow
+
+### 1. Input clarity
+
+- If a recent brainstorm exists in `docs/brainstorms/`, use it as the starting point
+- Otherwise clarify missing constraints briefly (don't re-brainstorm)
+
+### 2. Mandatory research
+
+Run before writing anything:
+- `researcher` subagent — existing patterns, similar features, architectural constraints
+- `~/.aiglobal/LEARNINGS.md` — past learnings relevant to this work
+- `docs/solutions/` — solved problems in the same area
+
+### 3. Consolidate findings
+
+- Existing implementations and reusable patterns (exact file paths)
+- Constraints from project rules
+- Risks: security, data integrity, SEO, i18n, schema migrations
+
+### 4. Write plan file
+
+Save to `docs/plans/YYYY-MM-DD-<type>-<topic>-plan.md`
+
+### 5. Plan structure (required)
+
+Every plan MUST include:
+
+```markdown
+# [Feature Name] Implementation Plan
+
+**Goal:** [One sentence]
+
+**Architecture:** [2-3 sentences about approach]
+
+---
+
+### Task N: [Component Name]
+
+**Files:**
+- Create: `exact/path/to/file.ext`
+- Modify: `exact/path/to/existing.ext` (what changes)
+- Test: `tests/path/to/test.ext` (if applicable)
+
+**Steps:**
+1. [Specific action with exact file path]
+2. [Verification command + expected output]
+3. [Commit message]
+
+### Acceptance Criteria
+- [ ] [Testable assertion]
+
+### Test Strategy
+- [What to validate, how, where]
+
+### Reference Implementations
+- [Exact file paths to existing patterns being followed]
+```
+
+### Task granularity
+
+Each task should be one coherent change (5-15 minutes of work):
+- touching 1-3 files
+- with a clear verification step
+- committable independently
+
+### Content rules for plan tasks
+
+- **Exact file paths** — never "the relevant file"
+- **Specific changes** — never "add validation" without showing what
+- **Verification commands** with expected output
+- **DRY, YAGNI** — don't plan abstractions for hypothetical future needs
+
+### 6. Handoff
+
+After saving the plan, recommend the appropriate next step:
+
+- **`/noevu-plan-review` first** (default) — when the plan touches 3+ files, involves architectural decisions, has ambiguous acceptance criteria, or the user hasn't confirmed requirements
+- **`/noevu-work` directly** — when the plan is small (1-2 tasks), the user explicitly said "just do it", or this is a second iteration after review feedback was already addressed
+
+When unsure, recommend review first. The cost of reviewing is low; the cost of implementing the wrong plan is high.
+
+## Stack-specific planning checks
+
+Before finalizing, verify the plan accounts for:
+- Astro route/content flow impacts (does a new page need a route? content file?)
+- Zod schema updates + parser usage (`*.parse`) — new fields need schema changes
+- component-map + section/component compatibility
+- i18n/hreflang implications (`normalizeLocale`, locale paths, hreflang tags)
+- CSS token/theme consistency (no hardcoded values, theme-aware)
+- structured data updates for SEO-sensitive pages
+
+
+ARGUMENTS: Bexio-Tools Projekt lokal einrichten, von Gemini auf Claude anpassen, und alte Rechnungen in Notion-Tabelle hinterlegen. GitHub: https://github.com/Noevu/bexio-tools
+
+---
+
+Nein, wir nutzen Claude Code mit Max Subscription… und rulesync… Gemini CLI subprocess → Claude Code (oder Codex) - siehe auch Jarvis Invoice / Rechnungen check in e-mails…
+
+---
+
+erläutere die drei offenen fragen besser…
+
+---
+
+Jarvis sucht regelmässig nach Rechnung  und Belegen im Gmail um diese weiter zu leiten… da ist auch die Npotpm amnomdimg gemacht. Ja, PDF anhängen und mit Bexio Kategorien abgleichen…
+
+---
+
+1. A jetzt, C danach mit duplicate detection… (file grösse?) – bexio-tools-ui ignorieren (war ein versuch für UI, können wir später neu bauen…
+
+---
+
+R2 ist was?
+
+---
+
+pdf direkt in notion hochladen geht nicht?
+
+---
+
+could this help? https://glama.ai/mcp/servers/goonoo/mcp_notion_upload/tools/upload_and_attach_file_to_page
+
+---
+
+wir nutzern aber eine DB, geht das auch? Oder was wenn wir einfach einen lokalen Link einfügen? file:// … ?
+
+---
+
+lets try…
+
+---
+
+ja
+
+---
+
+3. es sollten alle felder die wir extrahieren können rein…
