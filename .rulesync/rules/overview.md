@@ -7,6 +7,10 @@ globs: ["**/*"]
 
 # Bexio-Tools
 
+> **Generated file — do not edit.** `CLAUDE.md` and `AGENTS.md` are produced by
+> `rulesync` from `.rulesync/rules/`. Edit the source there, then run `rulesync generate`;
+> an edit made here is silently wiped on the next run.
+
 Python CLI für Bexio-Dokumentenmanagement mit KI-Unterstützung (Claude Code).
 
 ## Stack
